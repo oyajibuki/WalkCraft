@@ -280,14 +280,23 @@ export default function App() {
 
   // --- 認証チェック ---
   useEffect(() => {
+    // 5秒でタイムアウト → 必ずログイン画面を表示
+    const timeout = setTimeout(() => setAuthLoading(false), 5000);
+
     supabase.auth.getSession().then(({ data: { session } }) => {
+      clearTimeout(timeout);
+      setAuthUser(session?.user ?? null);
+      setAuthLoading(false);
+    }).catch(() => {
+      clearTimeout(timeout);
+      setAuthLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setAuthUser(session?.user ?? null);
       setAuthLoading(false);
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setAuthUser(session?.user ?? null);
-    });
-    return () => subscription.unsubscribe();
+    return () => { subscription.unsubscribe(); clearTimeout(timeout); };
   }, []);
 
   // --- ログイン後: データ読み込み ---
