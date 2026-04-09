@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Home, Gift, Hammer, Coins, Sparkles, AlertCircle, ArrowRightLeft, MapPin, Footprints, Hand, ArrowDownCircle, Navigation, Building2 } from 'lucide-react';
+import { Home, Gift, Hammer, Coins, Sparkles, AlertCircle, ArrowRightLeft, MapPin, Footprints, Hand, ArrowDownCircle, Navigation, Building2, LogOut } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Polyline, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { supabase } from './supabase';
 
 // Leaflet default icon fix for Vite
 delete L.Icon.Default.prototype._getIconUrl;
@@ -61,8 +62,8 @@ const BASE_STAGES = [
 ];
 
 const INITIAL_INVENTORY = { m1: 5, m2: 5, m3: 2, m4: 1, m5: 0, m6: 0, m7: 0, i1: 0, i2: 0, i3: 0, i4: 0, i5: 0, i6: 0, i7: 0 };
-const SAVE_KEY = 'walkcraft_save_v2';
-const MIN_MOVE_M = 10; // GPS誤差フィルタ: 10m未満は無視
+const SAVE_KEY = 'walkcraft_routes_v1'; // ルートのみlocalStorage
+const MIN_MOVE_M = 10;
 
 // --- GPS ユーティリティ ---
 const haversineM = (lat1, lon1, lat2, lon2) => {
@@ -89,7 +90,7 @@ const fetchOSRMRoute = async (from, to) => {
   return [[from.lat, from.lon], [to.lat, to.lon]];
 };
 
-function loadSave() {
+function loadRouteSave() {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return null;
@@ -137,7 +138,7 @@ const GameMap = ({ currentPos, waypoints, routeSegments, gpsDrops, recenterTrigg
         <Polyline key={i} positions={seg} pathOptions={{ color: '#3b82f6', weight: 4, opacity: 0.8 }} />
       ))}
 
-      {/* マップ上のアイテム（素材・クラフト品両対応） */}
+      {/* マップ上のアイテム */}
       {gpsDrops.map(d => (
         <Marker key={d.uid} position={[d.lat, d.lon]} icon={matIcon(d.materialId)} />
       ))}
@@ -145,21 +146,59 @@ const GameMap = ({ currentPos, waypoints, routeSegments, gpsDrops, recenterTrigg
   );
 };
 
+// --- ログイン画面 ---
+const LoginScreen = () => {
+  const [loading, setLoading] = useState(false);
+  const handleGoogle = async () => {
+    setLoading(true);
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
+    });
+  };
+  return (
+    <div className="flex flex-col items-center justify-center h-full bg-gradient-to-b from-green-50 to-blue-100 p-8">
+      <div className="text-8xl mb-6 drop-shadow-lg">🗺️</div>
+      <h1 className="text-3xl font-black text-slate-800 mb-2 tracking-tight">WalkCraft</h1>
+      <p className="text-slate-500 mb-12 text-center text-sm leading-relaxed">
+        歩いて、集めて、街を作る<br />リアル散歩RPG
+      </p>
+      <button
+        onClick={handleGoogle}
+        disabled={loading}
+        className="w-full max-w-xs py-4 bg-white border border-slate-200 rounded-2xl font-bold text-slate-700 shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-transform disabled:opacity-60"
+      >
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="" />
+        {loading ? 'ログイン中...' : 'Googleでログイン'}
+      </button>
+    </div>
+  );
+};
+
 // --- メインApp ---
 export default function App() {
-  const saved = loadSave() || {};
+  const routeSave = loadRouteSave() || {};
 
+  // --- 認証状態 ---
+  const [authUser, setAuthUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const dataLoadedRef = useRef(false);
+
+  // --- ゲーム状態（Supabaseから読み込む） ---
   const [activeTab, setActiveTab] = useState('home');
-  const [distance, setDistance] = useState(saved.distance ?? 0);
-  const [points, setPoints] = useState(saved.points ?? 100);
-  const [level, setLevel] = useState(saved.level ?? 1);
-  const [exp, setExp] = useState(saved.exp ?? 0);
-  const [inventory, setInventory] = useState(saved.inventory ?? INITIAL_INVENTORY);
-  const [collection, setCollection] = useState(saved.collection ?? []);
-  const [waypoints, setWaypoints] = useState(saved.waypoints ?? []);
-  const [routeSegments, setRouteSegments] = useState(saved.routeSegments ?? []);
-  const [gpsDrops, setGpsDrops] = useState(saved.gpsDrops ?? []);
+  const [distance, setDistance] = useState(0);
+  const [points, setPoints] = useState(100);
+  const [level, setLevel] = useState(1);
+  const [exp, setExp] = useState(0);
+  const [inventory, setInventory] = useState(INITIAL_INVENTORY);
+  const [collection, setCollection] = useState([]);
+  const [baseStage, setBaseStage] = useState(0);
 
+  // --- ルート（localStorageから読み込む） ---
+  const [waypoints, setWaypoints] = useState(routeSave.waypoints ?? []);
+  const [routeSegments, setRouteSegments] = useState(routeSave.routeSegments ?? []);
+
+  // --- GPS・UI状態 ---
   const [currentPos, setCurrentPos] = useState(null);
   const [gpsAccuracy, setGpsAccuracy] = useState(null);
   const [statusMsg, setStatusMsg] = useState(null);
@@ -174,11 +213,63 @@ export default function App() {
   const [showDropModal, setShowDropModal] = useState(false);
   const [itemToDrop, setItemToDrop] = useState('');
   const [isScanning, setIsScanning] = useState(false);
+  const [gpsDrops, setGpsDrops] = useState([]);
   const [geoDrops, setGeoDrops] = useState([]);
-  const [baseStage, setBaseStage] = useState(saved.baseStage ?? 0);
   const [tradeOffer, setTradeOffer] = useState('');
   const [tradeRequest, setTradeRequest] = useState('');
   const [tradeMessage, setTradeMessage] = useState('');
+
+  const saveTimerRef = useRef(null);
+
+  // --- 認証チェック ---
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setAuthUser(session?.user ?? null);
+      setAuthLoading(false);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAuthUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // --- ログイン後: データ読み込み ---
+  useEffect(() => {
+    if (!authUser) return;
+    dataLoadedRef.current = false;
+    loadPlayerData(authUser.id);
+    loadGeoDrops();
+  }, [authUser]);
+
+  const loadPlayerData = async (userId) => {
+    const { data } = await supabase
+      .from('player_data')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    if (data) {
+      setDistance(data.distance);
+      setPoints(data.points);
+      setLevel(data.level);
+      setExp(data.exp);
+      setBaseStage(data.base_stage);
+      setInventory(data.inventory);
+      setCollection(data.collection ?? []);
+    }
+    dataLoadedRef.current = true;
+  };
+
+  const loadGeoDrops = async () => {
+    const { data } = await supabase.from('geo_drops').select('*');
+    if (data) {
+      setGpsDrops(data.map(d => ({
+        uid: d.id,
+        materialId: d.material_id,
+        lat: d.lat,
+        lon: d.lon,
+      })));
+    }
+  };
 
   // --- GPS 追跡 ---
   useEffect(() => {
@@ -198,13 +289,25 @@ export default function App() {
     return () => navigator.geolocation.clearWatch(watchId);
   }, []);
 
-  // --- localStorage 保存 ---
+  // --- ルートをlocalStorageに保存 ---
   useEffect(() => {
-    localStorage.setItem(SAVE_KEY, JSON.stringify({
-      distance, points, level, exp, inventory, collection,
-      waypoints, routeSegments, gpsDrops, baseStage,
-    }));
-  }, [distance, points, level, exp, inventory, collection, waypoints, routeSegments, gpsDrops]);
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ waypoints, routeSegments }));
+  }, [waypoints, routeSegments]);
+
+  // --- ゲームデータをSupabaseに保存（3秒デバウンス） ---
+  useEffect(() => {
+    if (!authUser || !dataLoadedRef.current) return;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(async () => {
+      await supabase.from('player_data').upsert({
+        id: authUser.id,
+        distance, points, level, exp,
+        base_stage: baseStage,
+        inventory, collection,
+        updated_at: new Date().toISOString(),
+      });
+    }, 3000);
+  }, [distance, points, level, exp, baseStage, inventory, collection]);
 
   // --- レベルアップ判定 ---
   useEffect(() => {
@@ -258,13 +361,22 @@ export default function App() {
     if (Math.random() < 0.3) {
       const pool = Object.values(MATERIALS).filter(m => m.rarity <= 2);
       const mat = pool[Math.floor(Math.random() * pool.length)];
-      const offset = () => (Math.random() - 0.5) * 0.0006; // 約30m以内のランダムオフセット
-      setGpsDrops(prev => [...prev, {
-        uid: Date.now(),
-        materialId: mat.id,
-        lat: currentPos.lat + offset(),
-        lon: currentPos.lon + offset(),
-      }]);
+      const offset = () => (Math.random() - 0.5) * 0.0006;
+      const lat = currentPos.lat + offset();
+      const lon = currentPos.lon + offset();
+
+      const { data } = await supabase.from('geo_drops').insert({
+        user_id: authUser.id,
+        material_id: mat.id,
+        lat, lon,
+      }).select().single();
+
+      if (data) {
+        setGpsDrops(prev => [...prev, {
+          uid: data.id, materialId: data.material_id,
+          lat: data.lat, lon: data.lon,
+        }]);
+      }
       showStatus(`✨ ${mat.icon} ${mat.name} が周辺に出現！`);
     } else {
       showStatus(walked > 0 ? `✅ ${walked}m 記録しました！` : '📌 スタート地点を記録しました');
@@ -275,7 +387,7 @@ export default function App() {
   };
 
   // --- 拾う（100m以内） ---
-  const handlePickLocalDrops = () => {
+  const handlePickLocalDrops = async () => {
     if (!currentPos) { showStatus('📡 GPS取得中...'); return; }
     const nearby = gpsDrops.filter(d =>
       haversineM(currentPos.lat, currentPos.lon, d.lat, d.lon) <= 100
@@ -284,25 +396,37 @@ export default function App() {
       showStatus('🔍 半径100m以内に拾えるものはありません');
       return;
     }
+    const ids = nearby.map(d => d.uid);
+    await supabase.from('geo_drops').delete().in('id', ids);
+
     setInventory(prev => {
       const n = { ...prev };
       nearby.forEach(d => { n[d.materialId] = (n[d.materialId] || 0) + 1; });
       return n;
     });
-    setGpsDrops(prev => prev.filter(d => !nearby.find(n => n.uid === d.uid)));
+    setGpsDrops(prev => prev.filter(d => !ids.includes(d.uid)));
     showStatus(`👜 ${nearby.length}個 拾いました！`);
   };
 
   // --- 置く ---
-  const handleDropItem = () => {
+  const handleDropItem = async () => {
     if (!itemToDrop || !currentPos || inventory[itemToDrop] <= 0) return;
     const offset = () => (Math.random() - 0.5) * 0.0002;
-    setGpsDrops(prev => [...prev, {
-      uid: Date.now(),
-      materialId: itemToDrop,
-      lat: currentPos.lat + offset(),
-      lon: currentPos.lon + offset(),
-    }]);
+    const lat = currentPos.lat + offset();
+    const lon = currentPos.lon + offset();
+
+    const { data } = await supabase.from('geo_drops').insert({
+      user_id: authUser.id,
+      material_id: itemToDrop,
+      lat, lon,
+    }).select().single();
+
+    if (data) {
+      setGpsDrops(prev => [...prev, {
+        uid: data.id, materialId: data.material_id,
+        lat: data.lat, lon: data.lon,
+      }]);
+    }
     setInventory(prev => ({ ...prev, [itemToDrop]: prev[itemToDrop] - 1 }));
     setShowDropModal(false);
     setItemToDrop('');
@@ -415,16 +539,9 @@ export default function App() {
     showStatus('📦 交換条件をマップに設置しました');
   };
 
-  // --- UI ---
-  const xpMax = level * 3;
-  const xpPct = Math.min(100, Math.round((exp / xpMax) * 100));
-  const nearbyCount = currentPos
-    ? gpsDrops.filter(d => haversineM(currentPos.lat, currentPos.lon, d.lat, d.lon) <= 100).length
-    : 0;
-
   // --- 建設 ---
   const handleBuild = () => {
-    const next = BASE_STAGES[baseStage]; // baseStage=0 → BASE_STAGES[0] = stage1
+    const next = BASE_STAGES[baseStage];
     if (!next) return;
     const canBuild = Object.entries(next.cost).every(([id, qty]) => (inventory[id] || 0) >= qty);
     if (!canBuild) return;
@@ -436,6 +553,13 @@ export default function App() {
     setBaseStage(prev => prev + 1);
     showStatus(`🎉 ${next.name} が完成した！`);
   };
+
+  // --- UI ---
+  const xpMax = level * 3;
+  const xpPct = Math.min(100, Math.round((exp / xpMax) * 100));
+  const nearbyCount = currentPos
+    ? gpsDrops.filter(d => haversineM(currentPos.lat, currentPos.lon, d.lat, d.lon) <= 100).length
+    : 0;
 
   const renderBase = () => {
     const current = BASE_STAGES[baseStage - 1];
@@ -719,10 +843,9 @@ export default function App() {
                 const offerData = getItemData(drop.offering);
                 const reqData = getItemData(drop.requesting);
                 return (
-                  <div key={drop.id} className={`rounded-2xl p-4 border ${drop.isBot ? 'bg-teal-900/40 border-teal-700' : 'bg-slate-800 border-slate-600'}`}>
+                  <div key={drop.id} className="rounded-2xl p-4 border bg-slate-800 border-slate-600">
                     <div className="flex items-center gap-1.5 mb-2">
                       <span className="text-xs font-bold text-slate-300">{drop.user}</span>
-                      {drop.isBot && <span className="text-[10px] bg-teal-600 text-teal-100 px-1.5 py-0.5 rounded-full">BOT</span>}
                     </div>
                     <p className="text-sm mb-3">💬 {drop.message}</p>
                     <div className="flex items-center justify-between bg-slate-900 p-3 rounded-xl border border-slate-700">
@@ -786,9 +909,34 @@ export default function App() {
     </div>
   );
 
+  // --- ローディング ---
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gradient-to-b from-green-50 to-blue-100">
+        <div className="text-center">
+          <div className="text-6xl mb-4 animate-bounce">🗺️</div>
+          <p className="text-slate-500 font-bold text-sm">読み込み中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // --- ログイン画面 ---
+  if (!authUser) {
+    return (
+      <div className="h-screen w-full max-w-md mx-auto shadow-2xl">
+        <LoginScreen />
+      </div>
+    );
+  }
+
+  // --- ゲーム本体 ---
+  const userAvatar = authUser.user_metadata?.avatar_url;
+  const userName = authUser.user_metadata?.name ?? authUser.email;
+
   return (
     <div className="h-screen w-full bg-black text-slate-800 font-sans flex flex-col overflow-hidden max-w-md mx-auto shadow-2xl relative">
-      {/* 全画面ステータスメッセージ */}
+      {/* ステータスメッセージ */}
       {statusMsg && (
         <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[1000] bg-slate-900/90 text-white text-sm font-bold px-5 py-2.5 rounded-full shadow-2xl whitespace-nowrap">
           {statusMsg}
@@ -802,12 +950,23 @@ export default function App() {
 
       <header className="bg-slate-900 px-4 py-3 flex justify-between items-center z-20 shrink-0">
         <h1 className="font-extrabold text-white text-xl flex items-center gap-2 tracking-tight">
-          <MapPin className="text-teal-400 w-5 h-5" /> Walk & Craft
+          <MapPin className="text-teal-400 w-5 h-5" /> WalkCraft
         </h1>
-        <div className="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
-          <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-green-400 to-blue-500 flex items-center justify-center text-white font-bold text-[10px]">ME</div>
-          <span className="text-xs text-slate-300 font-bold">Lv.{level}</span>
-          <span className="text-xs text-yellow-400 font-bold">{points}pt</span>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
+            {userAvatar
+              ? <img src={userAvatar} className="w-6 h-6 rounded-full" alt="" />
+              : <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-green-400 to-blue-500 flex items-center justify-center text-white font-bold text-[10px]">ME</div>
+            }
+            <span className="text-xs text-slate-300 font-bold">Lv.{level}</span>
+            <span className="text-xs text-yellow-400 font-bold">{points}pt</span>
+          </div>
+          <button
+            onClick={() => supabase.auth.signOut()}
+            className="w-8 h-8 bg-slate-800 border border-slate-700 rounded-full flex items-center justify-center active:scale-95 transition-transform"
+          >
+            <LogOut className="w-4 h-4 text-slate-400" />
+          </button>
         </div>
       </header>
 
