@@ -875,53 +875,102 @@ export default function App() {
   const renderBase = () => {
     const current = BASE_STAGES[baseStage - 1];
     const next = BASE_STAGES[baseStage];
+    // stage3,4 は exterior.png の縦位置をずらして別シーンに見せる
+    const imgY = { 1:'20%', 2:'60%', 3:'0%', 4:'40%', 5:'30%', 6:'20%', 7:'10%', 8:'25%' }[baseStage] ?? '0%';
     return (
-      <div className="flex flex-col h-full p-4 bg-amber-50 overflow-y-auto">
-        <h2 className="text-xl font-black mb-4 text-amber-900">🏘️ 拠点</h2>
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-amber-200 mb-4 text-center">
-          <div className="text-7xl mb-3">{current?.icon ?? '🌿'}</div>
-          <h3 className="text-lg font-black text-slate-800">{current?.name ?? '荒野'}</h3>
-          <p className="text-sm text-slate-500 mt-1">{current?.desc ?? 'まだ何もない荒野。クラフトして建設しよう！'}</p>
-          <div className="mt-3 flex justify-center gap-1 flex-wrap">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className={`w-4 h-2 rounded-full ${i < baseStage ? 'bg-amber-500' : 'bg-slate-200'}`} />
-            ))}
+      <div className="flex flex-col h-full bg-slate-900 overflow-y-auto">
+
+        {/* ── シーン画像バナー ── */}
+        <div className="relative w-full shrink-0 overflow-hidden" style={{ height: 200 }}>
+          <img
+            src={`${BASE}bases/stage${baseStage}.png`}
+            alt={current?.name ?? '拠点'}
+            className="absolute inset-0 w-full h-full"
+            style={{
+              imageRendering: 'pixelated',
+              objectFit: 'cover',
+              objectPosition: `50% ${imgY}`,
+              transform: 'scale(1.05)',   /* 微拡大でドット感を強調 */
+            }}
+          />
+          {/* 下→上グラデオーバーレイ */}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent" />
+          {/* フェーズバッジ */}
+          <div className="absolute top-3 left-3">
+            <span className="text-[10px] font-black bg-amber-500 text-white px-2 py-0.5 rounded-full shadow">
+              {current?.phase ?? 'Phase 1'}
+            </span>
           </div>
-          <p className="text-xs text-slate-400 mt-1">Lv {baseStage} / 8</p>
-          {current && <p className="text-[10px] text-amber-500 font-bold mt-1">{BASE_STAGES[baseStage - 1]?.phase}</p>}
-        </div>
-        {next ? (
-          <div className="bg-white rounded-3xl p-5 shadow-sm border border-amber-200">
-            <h3 className="text-sm font-black text-amber-700 mb-3">次のアップグレード</h3>
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-4xl">{next.icon}</span>
-              <div><p className="font-black text-slate-800">{next.name}</p><p className="text-xs text-slate-500">{next.desc}</p></div>
+          {/* 拠点名＋進捗 */}
+          <div className="absolute bottom-3 left-4 right-4">
+            <div className="flex items-end gap-3">
+              <span className="text-4xl drop-shadow-lg">{current?.icon ?? '🌿'}</span>
+              <div className="flex-1">
+                <h3 className="text-white font-black text-xl leading-tight drop-shadow">
+                  {current?.name ?? '荒野'}
+                </h3>
+                <div className="flex items-center gap-1 mt-1.5">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className={`h-1.5 rounded-full transition-all ${i < baseStage ? 'bg-amber-400 w-4' : 'bg-white/25 w-3'}`} />
+                  ))}
+                  <span className="text-white/50 text-[10px] ml-1 font-bold">Lv {baseStage}/8</span>
+                </div>
+              </div>
             </div>
-            <p className="text-xs font-bold text-slate-600 mb-2">必要素材:</p>
+          </div>
+        </div>
+
+        {/* 説明文 */}
+        <div className="px-4 pt-3 pb-1 shrink-0">
+          <p className="text-sm text-slate-300 leading-relaxed">
+            {current?.desc ?? 'まだ何もない荒野。クラフトして建設しよう！'}
+          </p>
+        </div>
+
+        {/* ── 次のアップグレード ── */}
+        {next ? (
+          <div className="mx-4 mt-3 bg-slate-800 rounded-3xl p-5 border border-slate-700 mb-4">
+            <h3 className="text-sm font-black text-amber-400 mb-3">⬆️ 次のアップグレード</h3>
+            <div className="flex items-center gap-3 mb-4">
+              {/* 次ステージのサムネ */}
+              <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-slate-600 shrink-0">
+                <img
+                  src={`${BASE}bases/stage${Math.min(baseStage + 1, 8)}.png`}
+                  alt={next.name}
+                  className="w-full h-full"
+                  style={{ imageRendering: 'pixelated', objectFit: 'cover', objectPosition: '50% 20%' }}
+                />
+              </div>
+              <div>
+                <p className="font-black text-white text-base">{next.name}</p>
+                <p className="text-xs text-slate-400 mt-0.5">{next.desc}</p>
+              </div>
+            </div>
+            <p className="text-xs font-bold text-slate-400 mb-2">必要素材</p>
             <div className="space-y-2 mb-4">
               {Object.entries(next.cost).map(([id, qty]) => {
                 const item = getItemById(id);
                 const have = inventory[id] || 0;
                 const ok = have >= qty;
                 return (
-                  <div key={id} className={`flex items-center justify-between px-3 py-2 rounded-xl ${ok ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-                    <span className="text-sm flex items-center gap-1"><ItemIcon item={item} size="sm" />{item?.name}</span>
-                    <span className={`text-sm font-black ${ok ? 'text-green-600' : 'text-red-500'}`}>{have}/{qty} {ok ? '✅' : '❌'}</span>
+                  <div key={id} className={`flex items-center justify-between px-3 py-2 rounded-xl border ${ok ? 'bg-green-900/30 border-green-700' : 'bg-red-900/20 border-red-900'}`}>
+                    <span className="text-sm flex items-center gap-1.5 text-white"><ItemIcon item={item} size="sm" />{item?.name}</span>
+                    <span className={`text-sm font-black ${ok ? 'text-green-400' : 'text-red-400'}`}>{have}/{qty} {ok ? '✅' : '❌'}</span>
                   </div>
                 );
               })}
             </div>
             <button onClick={handleBuild}
               disabled={!Object.entries(next.cost).every(([id, qty]) => (inventory[id] || 0) >= qty)}
-              className="w-full py-4 rounded-2xl font-black text-lg active:scale-95 transition-transform shadow-md disabled:opacity-40 bg-amber-500 text-white">
+              className="w-full py-4 rounded-2xl font-black text-lg active:scale-95 transition-transform shadow-lg disabled:opacity-40 bg-gradient-to-r from-amber-500 to-orange-500 text-white">
               🔨 建設する
             </button>
           </div>
         ) : (
-          <div className="bg-amber-100 rounded-3xl p-6 text-center border border-amber-300">
+          <div className="mx-4 mt-3 bg-amber-900/30 rounded-3xl p-6 text-center border border-amber-700 mb-4">
             <p className="text-3xl mb-2">🏆</p>
-            <p className="font-black text-amber-800">メガロポリス完成！</p>
-            <p className="text-sm text-amber-600 mt-1">あなたは伝説の開拓者です</p>
+            <p className="font-black text-amber-300">メガロポリス完成！</p>
+            <p className="text-sm text-amber-500 mt-1">あなたは伝説の開拓者です</p>
             <p className="text-xs text-amber-500 mt-2">Phase 4: 現代都市期 — 達成！</p>
           </div>
         )}
