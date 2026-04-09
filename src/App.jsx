@@ -6,6 +6,40 @@ import 'leaflet/dist/leaflet.css';
 import { supabase } from './supabase';
 import ProfileSetup from './ProfileSetup';
 
+// ── ピクセルアートアイコン ──
+const BASE = import.meta.env.BASE_URL;
+const ITEM_IMGS = {
+  m1: 'items/m1.png',  m2: 'items/m2.png',  m4: 'items/m4.png',
+  m5: 'items/m5.png',  m6: 'items/m6.png',  m8: 'items/m8.png',
+  m9: 'items/m9.png',  m10: 'items/m10.png', m11: 'items/m11.png',
+  m15: 'items/m15.png', m16: 'items/m16.png', m18: 'items/m18.png',
+  m19: 'items/m19.png', m20: 'items/m20.png', m32: 'items/m32.png',
+  m35: 'items/m35.png', m39: 'items/m39.png', m40: 'items/m40.png',
+  m41: 'items/m41.png', m42: 'items/m42.png', m43: 'items/m43.png',
+  m44: 'items/m44.png', m45: 'items/m45.png', m46: 'items/m46.png',
+  m47: 'items/m47.png', m48: 'items/m48.png', m49: 'items/m49.png',
+  m50: 'items/m50.png', m51: 'items/m51.png', m52: 'items/m52.png',
+  ga2: 'items/ga2.png', ga3: 'items/ga3.png', ga5: 'items/ga5.png',
+  ga9: 'items/ga9.png', ga10: 'items/ga10.png',
+};
+const ItemIcon = ({ item, size = 'md', className = '' }) => {
+  const px = { sm: 22, md: 32, lg: 48, xl: 88 }[size] || 32;
+  const em = { sm: 'text-xl', md: 'text-2xl', lg: 'text-4xl', xl: 'text-7xl' }[size] || 'text-2xl';
+  const imgPath = item?.id ? ITEM_IMGS[item.id] : null;
+  if (imgPath) {
+    return (
+      <img
+        src={`${BASE}${imgPath}`}
+        alt={item?.name ?? ''}
+        width={px} height={px}
+        style={{ imageRendering: 'pixelated', objectFit: 'contain' }}
+        className={className}
+      />
+    );
+  }
+  return <span className={`${em} leading-none ${className}`}>{item?.icon ?? '❓'}</span>;
+};
+
 // Leaflet default icon fix
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -31,10 +65,11 @@ const exchangeIcon = L.divIcon({
 const getItemById = (id) => MATERIALS[id] || RECIPES.find(r => r.id === id);
 const matIcon = (id) => {
   const item = getItemById(id);
-  return L.divIcon({
-    html: `<div style="font-size:22px;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.6));line-height:1">${item?.icon ?? '❓'}</div>`,
-    className: '', iconSize: [28, 28], iconAnchor: [14, 14],
-  });
+  const imgPath = item?.id ? ITEM_IMGS[item.id] : null;
+  const html = imgPath
+    ? `<img src="${BASE}${imgPath}" width="28" height="28" style="image-rendering:pixelated;object-fit:contain;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.6))">`
+    : `<div style="font-size:22px;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.6));line-height:1">${item?.icon ?? '❓'}</div>`;
+  return L.divIcon({ html, className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
 };
 
 // --- データ定義 ---
@@ -870,7 +905,7 @@ export default function App() {
                 const ok = have >= qty;
                 return (
                   <div key={id} className={`flex items-center justify-between px-3 py-2 rounded-xl ${ok ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-                    <span className="text-sm">{item?.icon} {item?.name}</span>
+                    <span className="text-sm flex items-center gap-1"><ItemIcon item={item} size="sm" />{item?.name}</span>
                     <span className={`text-sm font-black ${ok ? 'text-green-600' : 'text-red-500'}`}>{have}/{qty} {ok ? '✅' : '❌'}</span>
                   </div>
                 );
@@ -947,7 +982,7 @@ export default function App() {
               {[...Object.values(MATERIALS), ...RECIPES].filter(i => (inventory[i.id] || 0) > 0).map(item => (
                 <div key={item.id} onClick={() => setItemToDrop(item.id)}
                   className={`border-2 rounded-lg p-2 text-center cursor-pointer ${itemToDrop === item.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
-                  <span className="text-2xl">{item.icon}</span>
+                  <div className="flex justify-center"><ItemIcon item={item} size="md" /></div>
                   <span className="text-[10px] block mt-1">x{inventory[item.id]}</span>
                 </div>
               ))}
@@ -970,7 +1005,7 @@ export default function App() {
         <p className="text-gray-600 mb-4 text-sm font-bold">歩いて貯めたポイントで周辺を深く探索！</p>
         <div className="my-6 h-36 flex flex-col items-center justify-center">
           {gachaResult
-            ? <div className="animate-bounce"><span className="text-7xl block">{gachaResult.icon}</span><span className="font-black text-lg text-yellow-600 mt-2 block">{gachaResult.name} 発見！</span></div>
+            ? <div className="animate-bounce flex flex-col items-center"><ItemIcon item={gachaResult} size="xl" /><span className="font-black text-lg text-yellow-600 mt-2 block">{gachaResult.name} 発見！</span></div>
             : <div className="text-6xl">🗺️</div>}
         </div>
         <div className="text-xs text-slate-400 mb-4 space-y-1">
@@ -1005,7 +1040,7 @@ export default function App() {
           <React.Fragment key={i}>
             {i === 1 && <span className="text-slate-400 font-black text-2xl">+</span>}
             <div className="w-20 h-20 bg-slate-700 rounded-2xl flex items-center justify-center border-2 border-dashed border-slate-500">
-              {mat ? <span className="text-4xl cursor-pointer" onClick={() => i === 0 ? setSelectedMat1(null) : setSelectedMat2(null)}>{getItemData(mat)?.icon}</span>
+              {mat ? <div className="cursor-pointer flex items-center justify-center" onClick={() => i === 0 ? setSelectedMat1(null) : setSelectedMat2(null)}><ItemIcon item={getItemData(mat)} size="lg" /></div>
                 : <span className="text-slate-500 text-xs font-bold">素材{i + 1}</span>}
             </div>
           </React.Fragment>
@@ -1031,7 +1066,7 @@ export default function App() {
             <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-2 flex flex-col items-center">
               <div onClick={() => count > 0 && toggleMaterial(item.id)}
                 className={`w-full p-2 text-center rounded-xl transition-all ${isSelected ? 'bg-orange-100 scale-95' : (count > 0 ? 'cursor-pointer active:scale-95' : '')}`}>
-                <span className="text-3xl block mb-1">{item.icon}</span>
+                <div className="flex justify-center mb-1"><ItemIcon item={item} size="md" /></div>
                 <span className="block text-[10px] font-black text-slate-700 truncate">{item.name}</span>
                 <span className="block text-xs font-bold text-slate-500">x{count}</span>
               </div>
@@ -1083,12 +1118,12 @@ export default function App() {
                     <div className="flex items-center justify-between bg-slate-900 p-3 rounded-xl border border-slate-700">
                       <div className="flex items-center gap-3">
                         <div className="text-center">
-                          <span className="text-3xl block">{offerData?.icon}</span>
+                          <div className="flex justify-center"><ItemIcon item={offerData} size="md" /></div>
                           <span className="text-[10px] text-teal-300 font-bold block mt-1">貰える</span>
                         </div>
                         <ArrowRightLeft className="w-4 h-4 text-slate-500" />
                         <div className="text-center">
-                          <span className="text-3xl block opacity-60">{reqData?.icon}</span>
+                          <div className="flex justify-center opacity-60"><ItemIcon item={reqData} size="md" /></div>
                           <span className="text-[10px] text-red-400 font-bold block mt-1">渡す</span>
                         </div>
                       </div>
