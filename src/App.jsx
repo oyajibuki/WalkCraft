@@ -441,38 +441,45 @@ const LoginScreen = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full bg-gradient-to-b from-green-50 to-blue-100 p-8">
-      <div className="text-8xl mb-6 drop-shadow-lg">🗺️</div>
-      <h1 className="text-3xl font-black text-slate-800 mb-2 tracking-tight">WalkCraft</h1>
-      <p className="text-slate-500 mb-10 text-center text-sm leading-relaxed">
-        歩いて、集めて、街を作る<br />リアル散歩RPG
-      </p>
-      <div className="w-full max-w-xs flex flex-col gap-3">
-        <button onClick={handleLine} disabled={!!loading}
-          className="w-full py-4 rounded-2xl font-bold text-white shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-transform disabled:opacity-60"
-          style={{ backgroundColor: '#06C755' }}>
-          <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
-            <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.105.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
-          </svg>
-          {loading === 'line' ? 'ログイン中...' : 'LINEでログイン'}
-        </button>
-        <button onClick={handleGoogle} disabled={!!loading}
-          className="w-full py-4 bg-white border border-slate-200 rounded-2xl font-bold text-slate-700 shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-transform disabled:opacity-60">
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="" />
-          {loading === 'google' ? 'ログイン中...' : 'Googleでログイン'}
-        </button>
-        <button onClick={handleTwitter} disabled={!!loading}
-          className="w-full py-4 bg-black border border-slate-700 rounded-2xl font-bold text-white shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-transform disabled:opacity-60">
-          <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
-            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-          </svg>
-          {loading === 'twitter' ? 'ログイン中...' : 'Xでログイン'}
-        </button>
-      </div>
-      <div className="mt-8 text-center text-xs text-slate-400 space-x-3">
-        <a href="./privacy.html" target="_blank" className="underline hover:text-slate-600">プライバシーポリシー</a>
-        <span>·</span>
-        <a href="./terms.html" target="_blank" className="underline hover:text-slate-600">利用規約</a>
+    <div className="relative flex flex-col items-center justify-center h-full overflow-hidden" style={{ background: '#0a0f1e' }}>
+      <img src={`${BASE}bases/stage1.png`} alt=""
+        className="absolute inset-0 w-full h-full opacity-15 scale-110"
+        style={{ imageRendering: 'pixelated', objectFit: 'cover' }} />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-950/70 to-slate-950" />
+      <div className="relative z-10 flex flex-col items-center px-8 w-full">
+        <div className="text-7xl mb-3" style={{ filter: 'drop-shadow(0 0 24px rgba(251,191,36,0.7))' }}>🗺️</div>
+        <h1 className="text-4xl font-black mb-1 tracking-widest" style={{ color: '#fbbf24', textShadow: '0 0 30px rgba(251,191,36,0.5)' }}>WalkCraft</h1>
+        <p className="text-slate-400 mb-2 text-center text-sm leading-relaxed">歩いて、集めて、街を作る</p>
+        <p className="text-amber-600/70 text-xs mb-10 tracking-widest">— リアル散歩RPG —</p>
+        <div className="w-full max-w-xs flex flex-col gap-3">
+          <button onClick={handleLine} disabled={!!loading}
+            className="w-full py-4 rounded-lg font-bold text-white flex items-center justify-center gap-3 disabled:opacity-50 active:translate-y-1 transition-all border-2"
+            style={{ background: 'linear-gradient(to bottom, #06C755, #059142)', borderColor: '#34d27a', boxShadow: '0 4px 0 #03703a' }}>
+            <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white flex-shrink-0">
+              <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.105.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
+            </svg>
+            {loading === 'line' ? 'ログイン中...' : 'LINEでログイン'}
+          </button>
+          <button onClick={handleGoogle} disabled={!!loading}
+            className="w-full py-4 rounded-lg font-bold text-slate-100 flex items-center justify-center gap-3 disabled:opacity-50 active:translate-y-1 transition-all border-2 border-slate-600"
+            style={{ background: 'linear-gradient(to bottom, #374151, #1f2937)', boxShadow: '0 4px 0 #111827' }}>
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="" />
+            {loading === 'google' ? 'ログイン中...' : 'Googleでログイン'}
+          </button>
+          <button onClick={handleTwitter} disabled={!!loading}
+            className="w-full py-4 rounded-lg font-bold text-slate-100 flex items-center justify-center gap-3 disabled:opacity-50 active:translate-y-1 transition-all border-2 border-slate-700"
+            style={{ background: 'linear-gradient(to bottom, #1e293b, #0f172a)', boxShadow: '0 4px 0 #020617' }}>
+            <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white flex-shrink-0">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+            </svg>
+            {loading === 'twitter' ? 'ログイン中...' : 'Xでログイン'}
+          </button>
+        </div>
+        <div className="mt-8 text-center text-xs text-slate-600 space-x-3">
+          <a href="./privacy.html" target="_blank" className="underline hover:text-slate-400 transition-colors">プライバシーポリシー</a>
+          <span>·</span>
+          <a href="./terms.html" target="_blank" className="underline hover:text-slate-400 transition-colors">利用規約</a>
+        </div>
       </div>
     </div>
   );
@@ -1004,41 +1011,53 @@ export default function App() {
           <Navigation className="w-5 h-5 text-blue-500" />
         </button>
       </div>
-      <div className="bg-white rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.1)] px-4 pt-4 pb-3 z-20 flex flex-col gap-2.5">
+      <div className="bg-slate-900 border-t border-slate-700 px-4 pt-4 pb-3 z-20 flex flex-col gap-2.5 shrink-0">
         <button onClick={handleRecordLocation} disabled={isRecording}
-          className="w-full py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl font-black text-lg shadow-lg active:scale-95 transition-transform flex justify-center items-center gap-2 disabled:opacity-60">
+          className="w-full py-4 rounded-xl font-black text-lg flex justify-center items-center gap-2 transition-all border-2 disabled:opacity-60"
+          style={{
+            background: 'linear-gradient(to bottom, #3b82f6, #2563eb)',
+            borderColor: '#60a5fa', color: '#fff',
+            boxShadow: '0 4px 0 #1d4ed8'
+          }}>
           <Footprints className="w-6 h-6" />
           {isRecording ? 'ルート取得中...' : '現在地を記録する'}
         </button>
         <div className="flex gap-2.5">
           <button onClick={handlePickLocalDrops}
-            className="flex-1 py-3 bg-green-100 text-green-700 rounded-xl font-bold flex justify-center items-center gap-1.5 border border-green-200 active:scale-95 transition-transform">
+            className="flex-1 py-3 rounded-xl font-bold flex justify-center items-center gap-1.5 transition-all border-2 active:scale-95"
+            style={{ background: 'linear-gradient(to bottom, #16a34a, #15803d)', borderColor: '#4ade80', color: '#fff', boxShadow: '0 3px 0 #14532d' }}>
             <Hand className="w-5 h-5" /> 拾う
-            {nearbyCount > 0 && <span className="bg-green-500 text-white text-xs px-1.5 py-0.5 rounded-full">{nearbyCount}</span>}
+            {nearbyCount > 0 && <span className="bg-white text-green-700 text-xs px-1.5 py-0.5 rounded-full font-black">{nearbyCount}</span>}
           </button>
           <button onClick={() => setShowDropModal(true)}
-            className="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-bold flex justify-center items-center gap-1.5 border border-slate-200 active:scale-95 transition-transform">
+            className="flex-1 py-3 rounded-xl font-bold flex justify-center items-center gap-1.5 transition-all border-2 border-slate-600 active:scale-95"
+            style={{ background: 'linear-gradient(to bottom, #334155, #1e293b)', color: '#94a3b8', boxShadow: '0 3px 0 #0f172a' }}>
             <ArrowDownCircle className="w-5 h-5" /> 置く
           </button>
         </div>
       </div>
       {showDropModal && (
         <div className="absolute inset-0 bg-black/60 z-50 flex items-end justify-center pb-4 px-4" onClick={() => setShowDropModal(false)}>
-          <div className="bg-white rounded-2xl w-full max-w-sm p-5 shadow-2xl" onClick={e => e.stopPropagation()}>
-            <h3 className="font-bold text-lg mb-2 text-center">アイテムをマップに置く</h3>
-            <p className="text-xs text-gray-500 text-center mb-4">現在地付近に設置。他の人が100m以内で拾えます。</p>
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-sm p-5 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <h3 className="font-bold text-lg mb-2 text-center text-white">アイテムをマップに置く</h3>
+            <p className="text-xs text-slate-400 text-center mb-4">現在地付近に設置。他の人が100m以内で拾えます。</p>
             <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto mb-4">
               {[...Object.values(MATERIALS), ...RECIPES].filter(i => (inventory[i.id] || 0) > 0).map(item => (
                 <div key={item.id} onClick={() => setItemToDrop(item.id)}
-                  className={`border-2 rounded-lg p-2 text-center cursor-pointer ${itemToDrop === item.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
+                  className={`border-2 rounded-lg p-2 text-center cursor-pointer transition-all ${itemToDrop === item.id ? 'border-amber-400 bg-amber-900/30' : 'border-slate-600 bg-slate-900'}`}>
                   <div className="flex justify-center"><ItemIcon item={item} size="md" /></div>
-                  <span className="text-[10px] block mt-1">x{inventory[item.id]}</span>
+                  <span className="text-[10px] block mt-1 text-slate-300">x{inventory[item.id]}</span>
                 </div>
               ))}
             </div>
             <div className="flex gap-2">
-              <button onClick={() => setShowDropModal(false)} className="flex-1 py-2 bg-gray-200 text-gray-700 rounded-xl font-bold">キャンセル</button>
-              <button onClick={handleDropItem} disabled={!itemToDrop} className="flex-1 py-2 bg-blue-500 text-white rounded-xl font-bold disabled:opacity-40">置く</button>
+              <button onClick={() => setShowDropModal(false)}
+                className="flex-1 py-2 bg-slate-700 text-slate-300 rounded-xl font-bold border border-slate-600 active:scale-95">キャンセル</button>
+              <button onClick={handleDropItem} disabled={!itemToDrop}
+                className="flex-1 py-2 rounded-xl font-bold disabled:opacity-40 border-2 active:scale-95"
+                style={itemToDrop ? { background: 'linear-gradient(to bottom, #3b82f6, #2563eb)', borderColor: '#60a5fa', color: '#fff', boxShadow: '0 3px 0 #1d4ed8' } : { background: '#1e293b', borderColor: '#334155', color: '#475569' }}>
+                置く
+              </button>
             </div>
           </div>
         </div>
@@ -1048,80 +1067,110 @@ export default function App() {
 
   // --- レンダー: 探索 ---
   const renderGacha = () => (
-    <div className="flex flex-col items-center h-full p-4 bg-slate-50 overflow-y-auto">
-      <h2 className="text-xl font-black mb-4">素材探索</h2>
-      <div className="bg-white p-6 rounded-3xl shadow-sm w-full max-w-sm text-center border-t-4 border-yellow-400">
-        <p className="text-gray-600 mb-4 text-sm font-bold">歩いて貯めたポイントで周辺を深く探索！</p>
-        <div className="my-6 h-36 flex flex-col items-center justify-center">
-          {gachaResult
-            ? <div className="animate-bounce flex flex-col items-center"><ItemIcon item={gachaResult} size="xl" /><span className="font-black text-lg text-yellow-600 mt-2 block">{gachaResult.name} 発見！</span></div>
-            : <div className="text-6xl">🗺️</div>}
+    <div className="flex flex-col h-full overflow-y-auto" style={{ background: '#0a0f1e' }}>
+      <div className="px-4 pt-5 pb-4 border-b border-slate-800 shrink-0">
+        <h2 className="text-xl font-black text-yellow-400 flex items-center gap-2">
+          <Gift className="w-5 h-5" /> 素材探索
+        </h2>
+      </div>
+      <div className="flex flex-col items-center p-4 w-full max-w-sm mx-auto">
+        <div className="w-full bg-slate-800 border border-slate-700 rounded-2xl p-5 text-center">
+          <p className="text-slate-400 mb-4 text-sm font-bold">歩いて貯めたポイントで周辺を深く探索！</p>
+          <div className="my-4 h-40 flex flex-col items-center justify-center bg-slate-900 rounded-xl border border-slate-700">
+            {gachaResult
+              ? <div className="animate-bounce flex flex-col items-center">
+                  <ItemIcon item={gachaResult} size="xl" />
+                  <span className="font-black text-lg text-amber-400 mt-2 block">{gachaResult.name} 発見！</span>
+                </div>
+              : <div className="text-5xl opacity-20">🗺️</div>}
+          </div>
+          <div className="text-xs space-y-1.5 mb-5 text-left">
+            <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-green-400 shrink-0" /><span className="text-slate-400">55% — Tier1  木の枝・石ころ・薬草 etc</span></div>
+            <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" /><span className="text-slate-400">30% — Tier2  鉄鉱石・石炭・銅鉱石 etc</span></div>
+            <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-purple-400 shrink-0" /><span className="text-slate-400">12% — Tier3  ハチミツ・水晶・金鉱石</span></div>
+            <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" /><span className="text-slate-400"> 3% — Tier4  隕石の欠片・街の噂</span></div>
+          </div>
+          <button onClick={handleGacha} disabled={points < 50}
+            className="w-full py-4 rounded-xl font-black text-lg flex items-center justify-center gap-2 transition-all border-2 disabled:opacity-40 disabled:cursor-not-allowed"
+            style={points >= 50 ? {
+              background: 'linear-gradient(to bottom, #fbbf24, #d97706)',
+              borderColor: '#fcd34d', color: '#451a03',
+              boxShadow: '0 4px 0 #92400e'
+            } : { background: '#1e293b', borderColor: '#334155', color: '#475569' }}
+            onMouseDown={e => { if (points >= 50) e.currentTarget.style.transform = 'translateY(4px)'; e.currentTarget.style.boxShadow = 'none'; }}
+            onMouseUp={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = points >= 50 ? '0 4px 0 #92400e' : 'none'; }}>
+            <Coins className="w-5 h-5" /> 探索する (50pt)
+          </button>
         </div>
-        <div className="text-xs text-slate-400 mb-4 space-y-1">
-          <p>🟢 55% — Tier1（木の枝・石ころ・薬草・火打ち石 etc）</p>
-          <p>🔵 30% — Tier2（鉄鉱石・石炭・銅鉱石・ゴムの樹液 etc）</p>
-          <p>🟣 12% — Tier3（ハチミツ・原油・水晶・金鉱石）</p>
-          <p>⭐  3% — Tier4（街の噂・隕石の欠片）</p>
-        </div>
-        <button onClick={handleGacha} disabled={points < 50}
-          className={`w-full py-4 rounded-xl font-black text-lg flex items-center justify-center gap-2 active:scale-95 transition-transform ${points >= 50 ? 'bg-yellow-400 text-yellow-900 shadow-md' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}>
-          <Coins className="w-5 h-5" /> 探索する (50pt)
-        </button>
       </div>
     </div>
   );
 
   // --- レンダー: クラフト ---
   const renderCraft = () => (
-    <div className="flex flex-col h-full p-4 max-w-md mx-auto w-full bg-slate-50">
-      <div className="flex justify-between items-center mb-2">
-        <h2 className="text-xl font-black">クラフト</h2>
-        <span className="text-sm font-black text-white bg-slate-800 px-3 py-1 rounded-full">Lv.{level}</span>
-      </div>
-      <div className="mb-3">
+    <div className="flex flex-col h-full" style={{ background: '#0a0f1e' }}>
+      {/* ヘッダー */}
+      <div className="px-4 pt-4 pb-3 bg-slate-900 border-b border-slate-800 shrink-0">
+        <div className="flex justify-between items-center mb-2">
+          <h2 className="text-xl font-black text-orange-400 flex items-center gap-2">
+            <Hammer className="w-5 h-5" /> クラフト
+          </h2>
+          <span className="text-sm font-black text-amber-400 bg-slate-800 px-3 py-1 rounded-full border border-slate-700">Lv.{level}</span>
+        </div>
         <div className="flex justify-between text-xs text-slate-500 font-bold mb-1"><span>EXP</span><span>{exp}/{xpMax}</span></div>
-        <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-orange-400 to-yellow-400 rounded-full transition-all duration-500" style={{ width: `${xpPct}%` }} />
+        <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+          <div className="h-full bg-gradient-to-r from-orange-500 to-amber-400 rounded-full transition-all duration-500" style={{ width: `${xpPct}%` }} />
         </div>
       </div>
-      <div className="bg-slate-800 p-5 rounded-3xl flex items-center justify-between mb-3">
-        {[selectedMat1, selectedMat2].map((mat, i) => (
-          <React.Fragment key={i}>
-            {i === 1 && <span className="text-slate-400 font-black text-2xl">+</span>}
-            <div className="w-20 h-20 bg-slate-700 rounded-2xl flex items-center justify-center border-2 border-dashed border-slate-500">
-              {mat ? <div className="cursor-pointer flex items-center justify-center" onClick={() => i === 0 ? setSelectedMat1(null) : setSelectedMat2(null)}><ItemIcon item={getItemData(mat)} size="lg" /></div>
-                : <span className="text-slate-500 text-xs font-bold">素材{i + 1}</span>}
-            </div>
-          </React.Fragment>
-        ))}
-      </div>
-      <button onClick={handleCraft} disabled={!selectedMat1 || !selectedMat2}
-        className={`w-full py-4 rounded-xl font-black text-lg mb-3 flex justify-center items-center gap-2 active:scale-95 transition-transform ${selectedMat1 && selectedMat2 ? 'bg-orange-500 text-white shadow-md' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}>
-        <Hammer className="w-6 h-6" /> 組み合わせる
-      </button>
-      {craftResult && (
-        <div className={`p-3 rounded-xl mb-3 text-center font-bold animate-pulse ${craftResult.success ? 'bg-green-100 text-green-700 border border-green-300' : 'bg-red-100 text-red-700 border border-red-300'}`}>
-          {craftResult.success ? <><Sparkles className="inline-block mr-1 w-4 h-4" />【{craftResult.item.name}】が完成！</>
-            : <><AlertCircle className="inline-block mr-1 w-4 h-4" />{craftResult.message}</>}
+      {/* クラフトスロット */}
+      <div className="px-4 pt-3 shrink-0">
+        <div className="bg-slate-800 border border-slate-700 p-5 rounded-2xl flex items-center justify-between mb-3">
+          {[selectedMat1, selectedMat2].map((mat, i) => (
+            <React.Fragment key={i}>
+              {i === 1 && <span className="text-slate-500 font-black text-2xl">+</span>}
+              <div className="w-20 h-20 bg-slate-900 rounded-xl flex items-center justify-center border-2 border-dashed border-slate-600">
+                {mat ? <div className="cursor-pointer flex items-center justify-center" onClick={() => i === 0 ? setSelectedMat1(null) : setSelectedMat2(null)}><ItemIcon item={getItemData(mat)} size="lg" /></div>
+                  : <span className="text-slate-600 text-xs font-bold">素材{i + 1}</span>}
+              </div>
+            </React.Fragment>
+          ))}
         </div>
-      )}
-      <h3 className="font-bold text-slate-700 mb-2 text-sm">インベントリ</h3>
-      <div className="grid grid-cols-3 gap-2 overflow-y-auto pb-4">
+        <button onClick={handleCraft} disabled={!selectedMat1 || !selectedMat2}
+          className="w-full py-4 rounded-xl font-black text-lg mb-3 flex justify-center items-center gap-2 transition-all border-2 disabled:opacity-40"
+          style={selectedMat1 && selectedMat2 ? {
+            background: 'linear-gradient(to bottom, #f97316, #c2410c)',
+            borderColor: '#fb923c', color: '#fff',
+            boxShadow: '0 4px 0 #7c2d12'
+          } : { background: '#1e293b', borderColor: '#334155', color: '#475569' }}>
+          <Hammer className="w-6 h-6" /> 組み合わせる
+        </button>
+        {craftResult && (
+          <div className={`p-3 rounded-xl mb-3 text-center font-bold ${craftResult.success ? 'bg-green-900/40 text-green-400 border border-green-700' : 'bg-red-900/30 text-red-400 border border-red-900'}`}>
+            {craftResult.success ? <><Sparkles className="inline-block mr-1 w-4 h-4" />【{craftResult.item.name}】が完成！</>
+              : <><AlertCircle className="inline-block mr-1 w-4 h-4" />{craftResult.message}</>}
+          </div>
+        )}
+      </div>
+      {/* インベントリ */}
+      <div className="px-4 pb-1 pt-1 shrink-0">
+        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">インベントリ</h3>
+      </div>
+      <div className="grid grid-cols-3 gap-2 overflow-y-auto px-4 pb-4">
         {[...Object.values(MATERIALS), ...RECIPES].map(item => {
           const count = inventory[item.id] || 0;
           if (count === 0 && selectedMat1 !== item.id && selectedMat2 !== item.id) return null;
           const isSelected = selectedMat1 === item.id || selectedMat2 === item.id;
           return (
-            <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-2 flex flex-col items-center">
+            <div key={item.id} className={`rounded-xl border p-2 flex flex-col items-center transition-all ${isSelected ? 'bg-orange-900/40 border-orange-600' : 'bg-slate-800 border-slate-700'}`}>
               <div onClick={() => count > 0 && toggleMaterial(item.id)}
-                className={`w-full p-2 text-center rounded-xl transition-all ${isSelected ? 'bg-orange-100 scale-95' : (count > 0 ? 'cursor-pointer active:scale-95' : '')}`}>
+                className={`w-full p-2 text-center rounded-lg transition-all ${count > 0 ? 'cursor-pointer active:scale-95' : ''}`}>
                 <div className="flex justify-center mb-1"><ItemIcon item={item} size="md" /></div>
-                <span className="block text-[10px] font-black text-slate-700 truncate">{item.name}</span>
+                <span className="block text-[10px] font-black text-slate-300 truncate">{item.name}</span>
                 <span className="block text-xs font-bold text-slate-500">x{count}</span>
               </div>
               <button onClick={() => handleSell(item.id)} disabled={count === 0}
-                className="mt-1 w-full flex items-center justify-center gap-1 text-[10px] font-bold bg-slate-100 text-slate-600 py-1 rounded disabled:opacity-30">
-                <Coins className="w-3 h-3 text-yellow-500" />{item.price}で売る
+                className="mt-1 w-full flex items-center justify-center gap-1 text-[10px] font-bold bg-slate-700 text-slate-400 py-1 rounded disabled:opacity-30 active:scale-95">
+                <Coins className="w-3 h-3 text-amber-500" />{item.price}で売る
               </button>
             </div>
           );
@@ -1237,8 +1286,11 @@ export default function App() {
 
   // --- ローディング ---
   if (authLoading) return (
-    <div className="flex items-center justify-center h-screen bg-gradient-to-b from-green-50 to-blue-100">
-      <div className="text-center"><div className="text-6xl mb-4 animate-bounce">🗺️</div><p className="text-slate-500 font-bold text-sm">読み込み中...</p></div>
+    <div className="flex items-center justify-center h-screen" style={{ background: '#0a0f1e' }}>
+      <div className="text-center">
+        <div className="text-6xl mb-4 animate-bounce" style={{ filter: 'drop-shadow(0 0 20px rgba(251,191,36,0.6))' }}>🗺️</div>
+        <p className="text-amber-400/60 font-bold text-sm tracking-widest">Loading...</p>
+      </div>
     </div>
   );
 
@@ -1294,7 +1346,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-hidden bg-slate-50 relative">
+      <main className="flex-1 overflow-hidden relative" style={{ background: '#0a0f1e' }}>
         {/* ホームタブは常時マウント（地図ぷるぷる防止） */}
         <div style={{ display: activeTab === 'home' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           {renderHome()}
@@ -1305,19 +1357,20 @@ export default function App() {
         {activeTab === 'exchange' && renderExchange()}
       </main>
 
-      <nav className="bg-white border-t border-slate-200 flex justify-around p-2 z-30 shrink-0"
+      <nav className="bg-slate-950 border-t border-slate-800 flex justify-around px-2 pt-2 z-30 shrink-0"
         style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
         {[
-          { tab: 'home', icon: <Home className="w-5 h-5" />, label: 'Home', color: 'text-blue-600 bg-blue-50' },
-          { tab: 'gacha', icon: <Gift className="w-5 h-5" />, label: '探索', color: 'text-yellow-500 bg-yellow-50' },
-          { tab: 'craft', icon: <Hammer className="w-5 h-5" />, label: 'クラフト', color: 'text-orange-500 bg-orange-50' },
-          { tab: 'exchange', icon: <ArrowRightLeft className="w-5 h-5" />, label: '交換', color: 'text-teal-600 bg-teal-50' },
-          { tab: 'base', icon: <Building2 className="w-5 h-5" />, label: '拠点', color: 'text-amber-600 bg-amber-50' },
-        ].map(({ tab, icon, label, color }) => (
+          { tab: 'home',     icon: <Home className="w-5 h-5" />,           label: 'ホーム',   activeColor: 'text-blue-400' },
+          { tab: 'gacha',    icon: <Gift className="w-5 h-5" />,           label: '探索',     activeColor: 'text-yellow-400' },
+          { tab: 'craft',    icon: <Hammer className="w-5 h-5" />,         label: 'クラフト', activeColor: 'text-orange-400' },
+          { tab: 'exchange', icon: <ArrowRightLeft className="w-5 h-5" />, label: '交換',     activeColor: 'text-teal-400' },
+          { tab: 'base',     icon: <Building2 className="w-5 h-5" />,      label: '拠点',     activeColor: 'text-amber-400' },
+        ].map(({ tab, icon, label, activeColor }) => (
           <button key={tab} onClick={() => setActiveTab(tab)}
-            className={`flex flex-col items-center p-2 rounded-xl w-14 transition-all ${activeTab === tab ? `${color} -translate-y-1` : 'text-slate-400'}`}>
+            className={`relative flex flex-col items-center py-1.5 px-3 rounded-lg transition-all ${activeTab === tab ? activeColor : 'text-slate-600'}`}>
+            {activeTab === tab && <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-amber-400 rounded-full" />}
             {icon}
-            <span className="text-[9px] mt-1 font-black">{label}</span>
+            <span className="text-[9px] mt-0.5 font-black">{label}</span>
           </button>
         ))}
       </nav>
