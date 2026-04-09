@@ -108,7 +108,7 @@ const GameMap = ({ currentPos, waypoints, routeSegments, gpsDrops, botPositions,
   const center = currentPos ? [currentPos.lat, currentPos.lon] : defaultCenter;
 
   return (
-    <MapContainer center={center} zoom={17} style={{ height: '100%', width: '100%' }} zoomControl={false} attributionControl={false}>
+    <MapContainer center={center} zoom={17} style={{ height: '100%', width: '100%' }} zoomControl={false} attributionControl={false} touchZoom={true} scrollWheelZoom={true}>
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       <RecenterOnTrigger pos={currentPos} trigger={recenterTrigger} />
 
