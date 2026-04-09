@@ -434,6 +434,11 @@ const LoginScreen = () => {
           {loading === 'twitter' ? 'ログイン中...' : 'Xでログイン'}
         </button>
       </div>
+      <div className="mt-8 text-center text-xs text-slate-400 space-x-3">
+        <a href="./privacy.html" target="_blank" className="underline hover:text-slate-600">プライバシーポリシー</a>
+        <span>·</span>
+        <a href="./terms.html" target="_blank" className="underline hover:text-slate-600">利用規約</a>
+      </div>
     </div>
   );
 };
