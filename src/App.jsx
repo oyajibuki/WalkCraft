@@ -48,6 +48,10 @@ const MATERIALS = {
   m16: { id: 'm16', name: 'ツタ',          icon: '🍃', rarity: 1, price: 5   },
   m17: { id: 'm17', name: '鳥の羽',        icon: '🪶', rarity: 1, price: 5   },
   m18: { id: 'm18', name: '謎のキノコ',    icon: '🍄', rarity: 1, price: 5   },
+  m22: { id: 'm22', name: 'リンゴ',        icon: '🍎', rarity: 1, price: 5   },
+  m25: { id: 'm25', name: '海草',          icon: '🌿', rarity: 1, price: 5   },
+  m27: { id: 'm27', name: '竹',            icon: '🎋', rarity: 1, price: 5   },
+  m31: { id: 'm31', name: 'バナナ',        icon: '🍌', rarity: 1, price: 5   },
   // Tier 2 — やや珍しい素材
   m4:  { id: 'm4',  name: '鉄鉱石',        icon: '🔩', rarity: 2, price: 15  },
   m8:  { id: 'm8',  name: '粘土',          icon: '🏺', rarity: 2, price: 10  },
@@ -55,40 +59,209 @@ const MATERIALS = {
   m10: { id: 'm10', name: '石炭',          icon: '⬛', rarity: 2, price: 15  },
   m11: { id: 'm11', name: '銅鉱石',        icon: '🟤', rarity: 2, price: 15  },
   m12: { id: 'm12', name: 'ゴムの樹液',    icon: '🌰', rarity: 2, price: 15  },
+  m21: { id: 'm21', name: 'クモの糸',      icon: '🕸️', rarity: 2, price: 10  },
+  m23: { id: 'm23', name: 'ケモノ肉',      icon: '🍖', rarity: 2, price: 15  },
+  m24: { id: 'm24', name: '貝殻',          icon: '🐚', rarity: 2, price: 10  },
+  m26: { id: 'm26', name: '骨',            icon: '🦴', rarity: 2, price: 10  },
+  m28: { id: 'm28', name: '綿花',          icon: '☁️', rarity: 2, price: 10  },
+  m29: { id: 'm29', name: '麻',            icon: '🌾', rarity: 2, price: 10  },
+  m30: { id: 'm30', name: 'ヤシの実',      icon: '🥥', rarity: 2, price: 15  },
+  m32: { id: 'm32', name: '毒消し草',      icon: '🌱', rarity: 2, price: 10  },
+  m33: { id: 'm33', name: '辛いトウガラシ',icon: '🌶️', rarity: 2, price: 15  },
+  m34: { id: 'm34', name: 'ひんやりメロン',icon: '🍈', rarity: 2, price: 15  },
+  m37: { id: 'm37', name: '獣の皮',        icon: '🟤', rarity: 2, price: 15  },
   // Tier 3 — レアな素材（探索ガチャで入手）
   m13: { id: 'm13', name: 'ハチミツ',      icon: '🍯', rarity: 3, price: 30  },
   m14: { id: 'm14', name: '原油',          icon: '🛢️', rarity: 3, price: 50  },
   m15: { id: 'm15', name: '水晶',          icon: '💎', rarity: 3, price: 50  },
   m19: { id: 'm19', name: '金鉱石',        icon: '🟡', rarity: 3, price: 80  },
+  m35: { id: 'm35', name: 'ビリビリキノコ',icon: '⚡', rarity: 3, price: 30  },
+  m38: { id: 'm38', name: 'サンゴ',        icon: '🪸', rarity: 3, price: 40  },
+  m40: { id: 'm40', name: '銀鉱石',        icon: '⚪', rarity: 3, price: 60  },
+  m45: { id: 'm45', name: '硫黄',          icon: '🟨', rarity: 3, price: 40  },
+  m46: { id: 'm46', name: '硝石',          icon: '🧂', rarity: 3, price: 40  },
+  m47: { id: 'm47', name: '鉛',            icon: '🪨', rarity: 3, price: 30  },
+  m49: { id: 'm49', name: '蛍石',          icon: '❇️', rarity: 3, price: 50  },
+  m51: { id: 'm51', name: '赤い砂',        icon: '🔴', rarity: 3, price: 50  },
   // Tier 4 — 超レア素材
   m7:  { id: 'm7',  name: '街の噂',        icon: '💬', rarity: 4, price: 50  },
   m20: { id: 'm20', name: '隕石の欠片',    icon: '☄️', rarity: 4, price: 200 },
+  m36: { id: 'm36', name: 'マックスラディッシュ', icon: '🥕', rarity: 4, price: 80 },
+  m39: { id: 'm39', name: '真珠',          icon: '⚪', rarity: 4, price: 100 },
+  m41: { id: 'm41', name: 'ダイヤモンド',  icon: '💎', rarity: 4, price: 200 },
+  m42: { id: 'm42', name: 'エメラルド',    icon: '💚', rarity: 4, price: 150 },
+  m43: { id: 'm43', name: 'ルビー',        icon: '❤️', rarity: 4, price: 150 },
+  m44: { id: 'm44', name: 'サファイア',    icon: '💙', rarity: 4, price: 150 },
+  m48: { id: 'm48', name: 'タングステン',  icon: '🔩', rarity: 4, price: 100 },
+  m52: { id: 'm52', name: '黒曜石',        icon: '⬛', rarity: 4, price: 100 },
+  // Tier 5 — 超激レア素材
+  m50: { id: 'm50', name: 'ウラン鉱石',    icon: '☢️', rarity: 5, price: 500 },
+  // ── ガチャ限定素材（ga prefix） ──
+  ga1:  { id: 'ga1',  name: '古代の歯車',        icon: '⚙️', rarity: 4, price: 150  },
+  ga2:  { id: 'ga2',  name: '古代のコア',         icon: '👁️', rarity: 5, price: 300  },
+  ga3:  { id: 'ga3',  name: 'マナの結晶',         icon: '🔮', rarity: 4, price: 150  },
+  ga4:  { id: 'ga4',  name: 'ドラゴンの鱗',       icon: '🐉', rarity: 5, price: 500  },
+  ga5:  { id: 'ga5',  name: '賢者の石の欠片',     icon: '🟥', rarity: 5, price: 500  },
+  ga6:  { id: 'ga6',  name: '星の砂',             icon: '✨', rarity: 4, price: 150  },
+  ga7:  { id: 'ga7',  name: '時空の砂',           icon: '⏳', rarity: 5, price: 300  },
+  ga8:  { id: 'ga8',  name: '未知の合金',         icon: '🛸', rarity: 5, price: 300  },
+  ga9:  { id: 'ga9',  name: '妖精の粉',           icon: '✨', rarity: 4, price: 150  },
+  ga10: { id: 'ga10', name: 'レインボークリスタル',icon: '💎', rarity: 5, price: 1000 },
+  ga11: { id: 'ga11', name: '黄金のチケットの切れ端', icon: '🎫', rarity: 4, price: 100 },
+  ga12: { id: 'ga12', name: '名匠のハンマー',     icon: '🔨', rarity: 4, price: 150  },
+  ga13: { id: 'ga13', name: '幸運のクローバー',   icon: '🍀', rarity: 4, price: 150  },
+  ga14: { id: 'ga14', name: '謎の設計図',         icon: '📜', rarity: 5, price: 500  },
+  // ── 地域限定素材（l prefix, 47都道府県） ──
+  l1:  { id: 'l1',  name: '北海道メロン',       icon: '🍈', rarity: 4, price: 100 },
+  l2:  { id: 'l2',  name: '青森りんご',         icon: '🍎', rarity: 4, price: 100 },
+  l3:  { id: 'l3',  name: '南部鉄器の欠片',     icon: '🫖', rarity: 4, price: 100 },
+  l4:  { id: 'l4',  name: '極上牛タン',         icon: '👅', rarity: 4, price: 100 },
+  l5:  { id: 'l5',  name: 'なまはげの藁',       icon: '👹', rarity: 4, price: 100 },
+  l6:  { id: 'l6',  name: 'さくらんぼ',         icon: '🍒', rarity: 4, price: 100 },
+  l7:  { id: 'l7',  name: '桃',                 icon: '🍑', rarity: 4, price: 100 },
+  l8:  { id: 'l8',  name: '納豆菌',             icon: '🦠', rarity: 4, price: 100 },
+  l9:  { id: 'l9',  name: 'とちおとめ',         icon: '🍓', rarity: 4, price: 100 },
+  l10: { id: 'l10', name: 'こんにゃく芋',       icon: '🥔', rarity: 4, price: 100 },
+  l11: { id: 'l11', name: '草加せんべい',       icon: '🍘', rarity: 4, price: 100 },
+  l12: { id: 'l12', name: '落花生',             icon: '🥜', rarity: 4, price: 100 },
+  l13: { id: 'l13', name: 'ネオンの欠片',       icon: '🚥', rarity: 4, price: 100 },
+  l14: { id: 'l14', name: 'しゅうまい',         icon: '🥟', rarity: 4, price: 100 },
+  l15: { id: 'l15', name: 'コシヒカリ',         icon: '🍚', rarity: 4, price: 100 },
+  l16: { id: 'l16', name: 'ホタルイカ',         icon: '🦑', rarity: 4, price: 100 },
+  l17: { id: 'l17', name: '金箔',               icon: '✨', rarity: 4, price: 100 },
+  l18: { id: 'l18', name: '恐竜の化石',         icon: '🦴', rarity: 4, price: 100 },
+  l19: { id: 'l19', name: '甲州ぶどう',         icon: '🍇', rarity: 4, price: 100 },
+  l20: { id: 'l20', name: '蕎麦の実',           icon: '🌾', rarity: 4, price: 100 },
+  l21: { id: 'l21', name: 'さるぼぼの布',       icon: '👘', rarity: 4, price: 100 },
+  l22: { id: 'l22', name: 'お茶の葉',           icon: '🍵', rarity: 4, price: 100 },
+  l23: { id: 'l23', name: '八丁味噌',           icon: '🍲', rarity: 4, price: 100 },
+  l24: { id: 'l24', name: '真珠貝',             icon: '🦪', rarity: 4, price: 100 },
+  l25: { id: 'l25', name: '琵琶湖の水',         icon: '💧', rarity: 4, price: 100 },
+  l26: { id: 'l26', name: '竹炭',               icon: '🎋', rarity: 4, price: 100 },
+  l27: { id: 'l27', name: 'たこ焼き粉',         icon: '🐙', rarity: 4, price: 100 },
+  l28: { id: 'l28', name: '神戸牛',             icon: '🥩', rarity: 4, price: 100 },
+  l29: { id: 'l29', name: '鹿の角',             icon: '🦌', rarity: 4, price: 100 },
+  l30: { id: 'l30', name: '紀州みかん',         icon: '🍊', rarity: 4, price: 100 },
+  l31: { id: 'l31', name: '砂丘の砂',           icon: '🐫', rarity: 4, price: 100 },
+  l32: { id: 'l32', name: '勾玉',               icon: '🪨', rarity: 4, price: 100 },
+  l33: { id: 'l33', name: 'きびだんご',         icon: '🍡', rarity: 4, price: 100 },
+  l34: { id: 'l34', name: 'もみじ饅頭',         icon: '🍁', rarity: 4, price: 100 },
+  l35: { id: 'l35', name: 'ふぐのヒレ',         icon: '🐡', rarity: 4, price: 100 },
+  l36: { id: 'l36', name: 'すだち',             icon: '🍋', rarity: 4, price: 100 },
+  l37: { id: 'l37', name: 'コシのある小麦',     icon: '🌾', rarity: 4, price: 100 },
+  l38: { id: 'l38', name: 'いよかん',           icon: '🍊', rarity: 4, price: 100 },
+  l39: { id: 'l39', name: '鰹のタタキ',         icon: '🐟', rarity: 4, price: 100 },
+  l40: { id: 'l40', name: '辛子明太子',         icon: '🌶️', rarity: 4, price: 100 },
+  l41: { id: 'l41', name: '有田焼の欠片',       icon: '🏺', rarity: 4, price: 100 },
+  l42: { id: 'l42', name: 'カステラ',           icon: '🍰', rarity: 4, price: 100 },
+  l43: { id: 'l43', name: 'スイカ',             icon: '🍉', rarity: 4, price: 100 },
+  l44: { id: 'l44', name: '温泉の素',           icon: '♨️', rarity: 4, price: 100 },
+  l45: { id: 'l45', name: '完熟マンゴー',       icon: '🥭', rarity: 4, price: 100 },
+  l46: { id: 'l46', name: '桜島の火山灰',       icon: '🌋', rarity: 4, price: 100 },
+  l47: { id: 'l47', name: '琉球ガラス',         icon: '🥂', rarity: 4, price: 100 },
 };
 const RECIPES = [
-  // ── Tier 1（Lv1解放）サバイバル基本 ──
+  // ── 既存レシピ i1-i20（変更不可） ──
+  // Tier 1（Lv1解放）サバイバル基本
   { id: 'i1',  name: '石の斧',          icon: '🪓', reqLevel: 1, materials: ['m1', 'm2'],   desc: '木を切るのに便利な斧。建築の基礎。',           price: 30   },
   { id: 'i2',  name: 'たいまつ',        icon: '🔦', reqLevel: 1, materials: ['m1', 'm6'],   desc: '暗い夜道を照らす。火打ち石で点火。',           price: 25   },
   { id: 'i3',  name: '弓',              icon: '🏹', reqLevel: 1, materials: ['m1', 'm16'],  desc: '遠くの敵を射る。ツタを弦にした手作り弓。',     price: 30   },
   { id: 'i4',  name: '矢',              icon: '🪃', reqLevel: 1, materials: ['m1', 'm17'],  desc: '弓の弾丸。鳥の羽で軌道が安定する。',           price: 15   },
   { id: 'i5',  name: '回復薬',          icon: '🧪', reqLevel: 1, materials: ['m5', 'm5'],   desc: '薬草を調合した回復薬。少し傷が癒える。',       price: 25   },
-  // ── Tier 2（Lv2解放）鉄・建築 ──
+  // Tier 2（Lv2解放）鉄・建築
   { id: 'i6',  name: '鉄のインゴット',  icon: '🧱', reqLevel: 2, materials: ['m4', 'm10'],  desc: '石炭で鉄鉱石を精錬。鉄器時代の幕開け。',       price: 50   },
   { id: 'i7',  name: 'レンガ',          icon: '🏗️', reqLevel: 2, materials: ['m8', 'm10'],  desc: '粘土を石炭で焼いた丈夫な建築素材。',           price: 40   },
   { id: 'i8',  name: 'ガラス',          icon: '🪟', reqLevel: 2, materials: ['m9', 'm10'],  desc: '砂を高熱で溶かした透明な素材。',               price: 40   },
   { id: 'i9',  name: '鉄の剣',          icon: '🗡️', reqLevel: 2, materials: ['m4', 'm6'],   desc: '鉄鉱石と火打ち石で鍛えた剣。',                 price: 100  },
   { id: 'i10', name: '回復薬グレート',  icon: '💊', reqLevel: 2, materials: ['m5', 'm13'],  desc: '薬草にハチミツを加えた高性能回復薬。',         price: 80   },
-  // ── Tier 3（Lv3解放）電気・工業 ──
+  // Tier 3（Lv3解放）電気・工業
   { id: 'i11', name: '銅のインゴット',  icon: '🥉', reqLevel: 3, materials: ['m11', 'm10'], desc: '銅鉱石を精錬した電気伝導体。',                 price: 60   },
   { id: 'i12', name: '銅線',            icon: '🔌', reqLevel: 3, materials: ['m11', 'm12'], desc: '銅鉱石とゴムで作った電気の通り道。',           price: 80   },
   { id: 'i13', name: 'ランタン',        icon: '🏮', reqLevel: 3, materials: ['m8', 'm14'],  desc: '粘土の器に原油を注いだランタン。',             price: 70   },
   { id: 'i14', name: '爆薬',            icon: '💥', reqLevel: 3, materials: ['m18', 'm6'],  desc: '謎のキノコと火打ち石で作った危険な爆薬。',     price: 90   },
   { id: 'i15', name: '魔法の薬',        icon: '🔮', reqLevel: 3, materials: ['m15', 'm13'], desc: '水晶とハチミツが生む不思議な力の薬。',         price: 150  },
-  // ── Tier 4（Lv4解放）精密・近代 ──
+  // Tier 4（Lv4解放）精密・近代
   { id: 'i16', name: '金のインゴット',  icon: '🥇', reqLevel: 4, materials: ['m19', 'm10'], desc: '金鉱石を精錬した高価な金属。装飾や精密機器に。', price: 150 },
   { id: 'i17', name: '電球',            icon: '💡', reqLevel: 4, materials: ['m9', 'm15'],  desc: '砂のガラスと水晶のフィラメントで光る。',       price: 120  },
   { id: 'i18', name: 'プラスチック',    icon: '🧴', reqLevel: 4, materials: ['m14', 'm2'],  desc: '原油と石から生まれた現代の素材。',             price: 100  },
   { id: 'i19', name: '通信機',          icon: '📻', reqLevel: 4, materials: ['m7', 'm12'],  desc: '街の噂とゴムで作った謎の通信装置。',           price: 300  },
-  { id: 'i20', name: 'ワールドコンパス', icon: '🧭', reqLevel: 4, materials: ['m20', 'm15'], desc: '隕石と水晶が示す、世界の中心への道。伝説の工芸品。', price: 1000 },
+  { id: 'i20', name: 'ワールドコンパス',icon: '🧭', reqLevel: 4, materials: ['m20', 'm15'], desc: '隕石と水晶が示す、世界の中心への道。伝説の工芸品。', price: 1000 },
+  // ── 中間素材レシピ r1-r12 ──
+  { id: 'r1',  name: '木の板',          icon: '🪧', reqLevel: 1, materials: ['m1', 'm1'],   desc: '建築の基本素材',                               price: 15   },
+  { id: 'r2',  name: '木炭',            icon: '⬛', reqLevel: 1, materials: ['m1', 'm6'],   desc: '木を焼いて作る燃料',                           price: 15   },
+  { id: 'r3',  name: '布',              icon: '🧻', reqLevel: 2, materials: ['m28', 'm21'],  desc: '綿花とクモの糸',                               price: 30   },
+  { id: 'r4',  name: '紙',              icon: '📄', reqLevel: 1, materials: ['m1', 'm3'],   desc: '木と水から作る記録媒体',                       price: 20   },
+  { id: 'r5',  name: '硫酸',            icon: '⚗️', reqLevel: 3, materials: ['m45', 'm3'],   desc: '硫黄と水の危険な混合物',                       price: 60   },
+  { id: 'r6',  name: '火薬',            icon: '🧨', reqLevel: 3, materials: ['m45', 'm46'],  desc: '爆発的なエネルギー',                           price: 70   },
+  { id: 'r7',  name: '石鹸',            icon: '🧼', reqLevel: 2, materials: ['m24', 'm25'],  desc: '貝殻と海草の命の石',                           price: 40   },
+  { id: 'r8',  name: '復活の液',        icon: '💧', reqLevel: 3, materials: ['m46', 'm13'],  desc: '硝石とハチミツの神秘',                         price: 80   },
+  { id: 'r9',  name: 'サルファ薬',      icon: '💊', reqLevel: 3, materials: ['m45', 'm18'],  desc: '万能の抗生物質',                               price: 100  },
+  { id: 'r10', name: '乾電池',          icon: '🔋', reqLevel: 3, materials: ['m47', 'm45'],  desc: '持ち運べる電力',                               price: 80   },
+  { id: 'r11', name: '歯車',            icon: '⚙️', reqLevel: 2, materials: ['m4', 'm4'],    desc: '機械工学の基本',                               price: 60   },
+  { id: 'r12', name: '真空管',          icon: '🪩', reqLevel: 3, materials: ['m9', 'm11'],   desc: '初期コンピュータの要',                         price: 100  },
+  // ── 食料レシピ f1-f15 ──
+  { id: 'f1',  name: '焼きリンゴ',      icon: '🍎', reqLevel: 1, materials: ['m22', 'm6'],   desc: '基本食料',                                     price: 20   },
+  { id: 'f2',  name: '携帯食料',        icon: '🍖', reqLevel: 1, materials: ['m23', 'm6'],   desc: 'スタミナ回復',                                 price: 30   },
+  { id: 'f3',  name: '解毒薬',          icon: '🧪', reqLevel: 1, materials: ['m32', 'm3'],   desc: '毒を治す',                                     price: 35   },
+  { id: 'f4',  name: 'がんばり薬',      icon: '🧪', reqLevel: 2, materials: ['m18', 'm23'],  desc: '移動距離ボーナス',                             price: 50   },
+  { id: 'f5',  name: 'ピリ辛肉料理',    icon: '🥩', reqLevel: 2, materials: ['m23', 'm33'],  desc: '寒冷地バフ',                                   price: 60   },
+  { id: 'f6',  name: 'ひんやりフルーツ',icon: '🍧', reqLevel: 2, materials: ['m22', 'm34'],  desc: '猛暑バフ',                                     price: 60   },
+  { id: 'f7',  name: 'ラーメン',        icon: '🍜', reqLevel: 2, materials: ['m29', 'm3'],   desc: '体力回復',                                     price: 40   },
+  { id: 'f8',  name: 'コーラ',          icon: '🥤', reqLevel: 2, materials: ['m13', 'm3'],   desc: '清涼飲料水',                                   price: 35   },
+  { id: 'f9',  name: '綿あめ',          icon: '☁️', reqLevel: 1, materials: ['m28', 'm1'],   desc: '甘くてふわふわ',                               price: 25   },
+  { id: 'f10', name: 'マックス料理',    icon: '🍲', reqLevel: 4, materials: ['m23', 'm36'],  desc: '最大体力超過回復',                             price: 200  },
+  { id: 'f11', name: '魔法のポーション',icon: '🔮', reqLevel: 4, materials: ['ga3', 'm3'],   desc: '全効率UP',                                     price: 300  },
+  { id: 'f12', name: 'フリーズドライ',  icon: '🧊', reqLevel: 3, materials: ['m23', 'm47'],  desc: '長期保存食',                                   price: 80   },
+  { id: 'f13', name: 'ヤシジュース',    icon: '🥥', reqLevel: 1, materials: ['m30', 'm3'],   desc: '南国の栄養補給',                               price: 30   },
+  { id: 'f14', name: 'ハチミツ漬け',    icon: '🍯', reqLevel: 2, materials: ['m22', 'm13'],  desc: '長期保存の甘味',                               price: 50   },
+  { id: 'f15', name: '海草スープ',      icon: '🌿', reqLevel: 1, materials: ['m25', 'm3'],   desc: '海の栄養素',                                   price: 25   },
+  // ── 武器・道具レシピ w1-w15 ──
+  { id: 'w1',  name: '木のピッケル',    icon: '⛏️', reqLevel: 1, materials: ['m1', 'm27'],   desc: '竹を使ったピッケル',                           price: 25   },
+  { id: 'w2',  name: '石のピッケル',    icon: '⛏️', reqLevel: 1, materials: ['m27', 'm2'],   desc: '竹と石のピッケル',                             price: 30   },
+  { id: 'w3',  name: '鉄のピッケル',    icon: '⛏️', reqLevel: 2, materials: ['m4', 'm16'],   desc: '採掘効率UP',                                   price: 80   },
+  { id: 'w4',  name: 'ダイヤのピッケル',icon: '⛏️', reqLevel: 4, materials: ['m41', 'm1'],   desc: '最強のツルハシ',                               price: 500  },
+  { id: 'w5',  name: 'ダイヤの剣',      icon: '🗡️', reqLevel: 4, materials: ['m41', 'm16'],  desc: 'マイクラ最強の剣',                             price: 600  },
+  { id: 'w6',  name: '勇者の剣',        icon: '🗡️', reqLevel: 4, materials: ['ga2', 'm4'],   desc: '退魔の剣',                                     price: 800  },
+  { id: 'w7',  name: '日本刀',          icon: '🗡️', reqLevel: 3, materials: ['m4', 'l26'],   desc: '鉄と竹炭で鍛えた刀',                           price: 400  },
+  { id: 'w8',  name: '木の盾',          icon: '🛡️', reqLevel: 1, materials: ['m1', 'm37'],   desc: '獣の皮で補強した盾',                           price: 35   },
+  { id: 'w9',  name: '鉄の盾',          icon: '🛡️', reqLevel: 2, materials: ['m4', 'm28'],   desc: '綿でパッドした鉄盾',                           price: 100  },
+  { id: 'w10', name: '弓矢セット',      icon: '🏹', reqLevel: 2, materials: ['m27', 'm21'],  desc: '竹とクモの糸の弓',                             price: 60   },
+  { id: 'w11', name: '炎の矢',          icon: '🔥', reqLevel: 3, materials: ['m6', 'm17'],   desc: '着弾すると燃える',                             price: 50   },
+  { id: 'w12', name: '氷の矢',          icon: '❄️', reqLevel: 4, materials: ['m44', 'm17'],  desc: 'サファイアの矢',                               price: 120  },
+  { id: 'w13', name: '雷の矢',          icon: '⚡', reqLevel: 4, materials: ['m35', 'm17'],  desc: 'ビリビリキノコの矢',                           price: 120  },
+  { id: 'w14', name: 'バクダン',        icon: '💣', reqLevel: 3, materials: ['m8', 'm45'],   desc: '粘土と硫黄の爆弾',                             price: 150  },
+  { id: 'w15', name: '魔法の杖',        icon: '🪄', reqLevel: 4, materials: ['m1', 'ga3'],   desc: 'マナの結晶の杖',                               price: 400  },
+  // ── 建物・乗り物レシピ b1-b12 ──
+  { id: 'b1',  name: '作業台',          icon: '🪚', reqLevel: 1, materials: ['m27', 'm28'],  desc: 'クラフトの基本設備',                           price: 30   },
+  { id: 'b2',  name: 'かまど',          icon: '🧱', reqLevel: 1, materials: ['m2', 'm10'],   desc: '鉱石を精錬する炉',                             price: 40   },
+  { id: 'b3',  name: 'チェスト',        icon: '🧰', reqLevel: 2, materials: ['m27', 'm4'],   desc: '収納が増える',                                 price: 60   },
+  { id: 'b4',  name: 'ベッド',          icon: '🛏️', reqLevel: 2, materials: ['m1', 'm28'],   desc: 'リスポーン地点設定',                           price: 50   },
+  { id: 'b5',  name: 'エンチャント台',  icon: '📖', reqLevel: 4, materials: ['m52', 'm41'],  desc: '装備に魔法付与',                               price: 800  },
+  { id: 'b6',  name: '醸造台',          icon: '⚗️', reqLevel: 3, materials: ['m4', 'm15'],   desc: 'ポーションを作る',                             price: 200  },
+  { id: 'b7',  name: '自転車',          icon: '🚲', reqLevel: 3, materials: ['m4', 'm12'],   desc: '歩行ボーナス付与',                             price: 300  },
+  { id: 'b8',  name: 'パラセール',      icon: '🪂', reqLevel: 3, materials: ['m29', 'm1'],   desc: '麻と木の滑空装備',                             price: 200  },
+  { id: 'b9',  name: '気球',            icon: '🎈', reqLevel: 4, materials: ['m29', 'm6'],   desc: '上空から地形把握',                             price: 500  },
+  { id: 'b10', name: '科学船',          icon: '⛵', reqLevel: 3, materials: ['m27', 'm29'],  desc: '竹と麻の帆船',                                 price: 400  },
+  { id: 'b11', name: 'シーカー端末',    icon: '📱', reqLevel: 4, materials: ['ga1', 'm15'],  desc: '地図が詳細になる',                             price: 600  },
+  { id: 'b12', name: 'ワープポイント',  icon: '🗼', reqLevel: 4, materials: ['m49', 'ga2'],  desc: 'ファストトラベル',                             price: 1000 },
+  // ── プレミアムレシピ p1-p8 ──
+  { id: 'p1',  name: '黄金のコンパス',  icon: '🧭', reqLevel: 4, materials: ['i16', 'ga10'], desc: 'レアドロップ率2倍',                            price: 2000 },
+  { id: 'p2',  name: 'メガホン',        icon: '📣', reqLevel: 3, materials: ['i19', 'ga9'],  desc: '交換条件を全国通知',                           price: 1500 },
+  { id: 'p3',  name: '無限のリュック',  icon: '🎒', reqLevel: 3, materials: ['m37', 'ga10'], desc: 'インベントリ拡張',                             price: 2000 },
+  { id: 'p4',  name: 'クローンの鏡',    icon: '🪞', reqLevel: 4, materials: ['i8', 'ga3'],   desc: 'アイテム複製',                                 price: 3000 },
+  { id: 'p5',  name: 'プレミアムガチャ券', icon: '🎟️', reqLevel: 1, materials: ['ga11', 'ga10'], desc: 'Tier4-5限定ガチャ',                       price: 500  },
+  { id: 'p6',  name: 'ゴージャスな玉座',icon: '💺', reqLevel: 4, materials: ['i16', 'm41'],  desc: '拠点最高級デコ',                               price: 5000 },
+  { id: 'p7',  name: 'クリエイターの証',icon: '🎖️', reqLevel: 1, materials: ['ga10', 'ga14'],desc: '開発者支援の証',                               price: 10000},
+  { id: 'p8',  name: '時をかける時計',  icon: '⏱️', reqLevel: 4, materials: ['ga1', 'ga7'],  desc: 'クラフト即完了',                               price: 3000 },
+  // ── 地域コラボレシピ lr1-lr8 ──
+  { id: 'lr1', name: '黄金の茶室',      icon: '🍵', reqLevel: 4, materials: ['l17', 'l22'],  desc: '金箔+お茶',                                    price: 5000 },
+  { id: 'lr2', name: '精巧な砂時計',    icon: '⏳', reqLevel: 3, materials: ['l31', 'i8'],   desc: '砂丘の砂+ガラス',                              price: 2000 },
+  { id: 'lr3', name: '特製アップルパイ',icon: '🥧', reqLevel: 2, materials: ['l2', 'm13'],   desc: '青森りんご+ハチミツ',                          price: 1000 },
+  { id: 'lr4', name: 'コシ強うどん',    icon: '🍜', reqLevel: 2, materials: ['l37', 'm3'],   desc: '香川小麦+水',                                  price: 800  },
+  { id: 'lr5', name: 'ネオン看板',      icon: '🚥', reqLevel: 3, materials: ['l13', 'i8'],   desc: '東京ネオン+ガラス',                            price: 2000 },
+  { id: 'lr6', name: '絶品海鮮丼',      icon: '🍱', reqLevel: 3, materials: ['l15', 'l40'],  desc: '新潟米+明太子',                                price: 3000 },
+  { id: 'lr7', name: '鹿角の魔杖',      icon: '🪄', reqLevel: 4, materials: ['l29', 'ga3'],  desc: '奈良鹿角+マナの結晶',                          price: 4000 },
+  { id: 'lr8', name: '日本地図の完成図',icon: '🗺️', reqLevel: 4, materials: ['i20', 'l1'],   desc: 'ワールドコンパス+北海道メロン（代表）',         price: 99999},
 ];
 const BASE_STAGES = [
   { stage: 1, name: '焚き火キャンプ',   icon: '🔥', phase: 'Phase 1: サバイバル期',   desc: '焚き火を囲む原野のキャンプ。旅の始まり。',                              cost: { m1: 10, m2: 5 } },
@@ -101,11 +274,41 @@ const BASE_STAGES = [
   { stage: 8, name: 'メガロポリス',     icon: '🌆', phase: 'Phase 4: 現代都市期',     desc: '電球・プラスチック・ワールドコンパス。あなたは伝説の開拓者！',           cost: { i17: 2, i18: 3, i20: 1 } },
 ];
 const INITIAL_INVENTORY = {
+  // 既存素材 m1-m20
   m1: 5, m2: 5, m3: 2, m4: 0, m5: 0, m6: 0, m7: 0,
   m8: 0, m9: 0, m10: 0, m11: 0, m12: 0, m13: 0, m14: 0, m15: 0,
   m16: 0, m17: 0, m18: 0, m19: 0, m20: 0,
+  // 新規素材 m21-m52
+  m21: 0, m22: 0, m23: 0, m24: 0, m25: 0, m26: 0, m27: 0, m28: 0, m29: 0, m30: 0,
+  m31: 0, m32: 0, m33: 0, m34: 0, m35: 0, m36: 0, m37: 0, m38: 0, m39: 0, m40: 0,
+  m41: 0, m42: 0, m43: 0, m44: 0, m45: 0, m46: 0, m47: 0, m48: 0, m49: 0, m50: 0,
+  m51: 0, m52: 0,
+  // ガチャ限定素材 ga1-ga14
+  ga1: 0, ga2: 0, ga3: 0, ga4: 0, ga5: 0, ga6: 0, ga7: 0,
+  ga8: 0, ga9: 0, ga10: 0, ga11: 0, ga12: 0, ga13: 0, ga14: 0,
+  // 地域限定素材 l1-l47
+  l1: 0, l2: 0, l3: 0, l4: 0, l5: 0, l6: 0, l7: 0, l8: 0, l9: 0, l10: 0,
+  l11: 0, l12: 0, l13: 0, l14: 0, l15: 0, l16: 0, l17: 0, l18: 0, l19: 0, l20: 0,
+  l21: 0, l22: 0, l23: 0, l24: 0, l25: 0, l26: 0, l27: 0, l28: 0, l29: 0, l30: 0,
+  l31: 0, l32: 0, l33: 0, l34: 0, l35: 0, l36: 0, l37: 0, l38: 0, l39: 0, l40: 0,
+  l41: 0, l42: 0, l43: 0, l44: 0, l45: 0, l46: 0, l47: 0,
+  // 既存レシピ i1-i20
   i1: 0, i2: 0, i3: 0, i4: 0, i5: 0, i6: 0, i7: 0, i8: 0, i9: 0, i10: 0,
   i11: 0, i12: 0, i13: 0, i14: 0, i15: 0, i16: 0, i17: 0, i18: 0, i19: 0, i20: 0,
+  // 中間素材レシピ r1-r12
+  r1: 0, r2: 0, r3: 0, r4: 0, r5: 0, r6: 0, r7: 0, r8: 0, r9: 0, r10: 0, r11: 0, r12: 0,
+  // 食料レシピ f1-f15
+  f1: 0, f2: 0, f3: 0, f4: 0, f5: 0, f6: 0, f7: 0, f8: 0, f9: 0, f10: 0,
+  f11: 0, f12: 0, f13: 0, f14: 0, f15: 0,
+  // 武器・道具レシピ w1-w15
+  w1: 0, w2: 0, w3: 0, w4: 0, w5: 0, w6: 0, w7: 0, w8: 0, w9: 0, w10: 0,
+  w11: 0, w12: 0, w13: 0, w14: 0, w15: 0,
+  // 建物・乗り物レシピ b1-b12
+  b1: 0, b2: 0, b3: 0, b4: 0, b5: 0, b6: 0, b7: 0, b8: 0, b9: 0, b10: 0, b11: 0, b12: 0,
+  // プレミアムレシピ p1-p8
+  p1: 0, p2: 0, p3: 0, p4: 0, p5: 0, p6: 0, p7: 0, p8: 0,
+  // 地域コラボレシピ lr1-lr8
+  lr1: 0, lr2: 0, lr3: 0, lr4: 0, lr5: 0, lr6: 0, lr7: 0, lr8: 0,
 };
 const SAVE_KEY = 'walkcraft_routes_v1';
 const MIN_MOVE_M = 10;
@@ -797,7 +1000,7 @@ export default function App() {
           <React.Fragment key={i}>
             {i === 1 && <span className="text-slate-400 font-black text-2xl">+</span>}
             <div className="w-20 h-20 bg-slate-700 rounded-2xl flex items-center justify-center border-2 border-dashed border-slate-500">
-              {mat ? <span className="text-4xl cursor-pointer" onClick={() => i === 0 ? setSelectedMat1(null) : setSelectedMat2(null)}>{MATERIALS[mat]?.icon}</span>
+              {mat ? <span className="text-4xl cursor-pointer" onClick={() => i === 0 ? setSelectedMat1(null) : setSelectedMat2(null)}>{getItemData(mat)?.icon}</span>
                 : <span className="text-slate-500 text-xs font-bold">素材{i + 1}</span>}
             </div>
           </React.Fragment>
@@ -819,11 +1022,10 @@ export default function App() {
           const count = inventory[item.id] || 0;
           if (count === 0 && selectedMat1 !== item.id && selectedMat2 !== item.id) return null;
           const isSelected = selectedMat1 === item.id || selectedMat2 === item.id;
-          const isMat = !!MATERIALS[item.id];
           return (
             <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-2 flex flex-col items-center">
-              <div onClick={() => isMat && toggleMaterial(item.id)}
-                className={`w-full p-2 text-center rounded-xl transition-all ${isSelected ? 'bg-orange-100 scale-95' : (isMat ? 'cursor-pointer active:scale-95' : '')}`}>
+              <div onClick={() => count > 0 && toggleMaterial(item.id)}
+                className={`w-full p-2 text-center rounded-xl transition-all ${isSelected ? 'bg-orange-100 scale-95' : (count > 0 ? 'cursor-pointer active:scale-95' : '')}`}>
                 <span className="text-3xl block mb-1">{item.icon}</span>
                 <span className="block text-[10px] font-black text-slate-700 truncate">{item.name}</span>
                 <span className="block text-xs font-bold text-slate-500">x{count}</span>
