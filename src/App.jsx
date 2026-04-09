@@ -49,10 +49,33 @@ L.Icon.Default.mergeOptions({
 });
 
 // --- アイコン定義 ---
-const currentPosIcon = L.divIcon({
-  html: '<div style="width:16px;height:16px;background:#3b82f6;border:3px solid white;border-radius:50%;box-shadow:0 0 0 2px #3b82f6,0 2px 8px rgba(0,0,0,0.4)"></div>',
-  className: '', iconSize: [16, 16], iconAnchor: [8, 8],
-});
+// プレイヤーキャラクター（ソードマン）スプライト
+// Idle sheet: 768×256, 4方向(rows)×12フレーム(cols), 64×64px/frame
+// 下向き(row 0)を表示、表示サイズ48px(スケール0.75)
+const getPlayerIcon = (level) => {
+  const charLvl = level <= 3 ? 1 : level <= 6 ? 2 : 3;
+  const frameW = 64, frameH = 64;
+  const frames = 12;
+  const displaySize = 48;
+  const scale = displaySize / frameH;
+  const scaledSheetW = 768 * scale; // 576px
+  const scaledSheetH = 256 * scale; // 192px
+  const uid = `player-idle-${charLvl}`;
+  return L.divIcon({
+    html: `<style>@keyframes ${uid}{from{background-position:0 0}to{background-position:-${scaledSheetW}px 0}}</style>
+<div style="width:${displaySize}px;height:${displaySize}px;overflow:hidden;
+background-image:url('${BASE}character/idle_lvl${charLvl}.png');
+background-size:${scaledSheetW}px ${scaledSheetH}px;
+background-position:0 0;
+background-repeat:no-repeat;
+image-rendering:pixelated;
+filter:drop-shadow(0 3px 8px rgba(0,0,0,0.9));
+animation:${uid} 1.4s steps(${frames}) infinite;"></div>`,
+    className: '',
+    iconSize: [displaySize, displaySize],
+    iconAnchor: [displaySize / 2, displaySize / 2],
+  });
+};
 const waypointIcon = L.divIcon({
   html: '<div style="width:8px;height:8px;background:#94a3b8;border:2px solid white;border-radius:50%"></div>',
   className: '', iconSize: [8, 8], iconAnchor: [4, 4],
@@ -393,7 +416,7 @@ const MapSizeInvalidator = ({ isVisible }) => {
 };
 
 // --- 地図コンポーネント ---
-const GameMap = ({ currentPos, waypoints, routeSegments, gpsDrops, tradeMarkers, recenterTrigger, isVisible }) => {
+const GameMap = ({ currentPos, waypoints, routeSegments, gpsDrops, tradeMarkers, recenterTrigger, isVisible, playerLevel = 1 }) => {
   const center = currentPos ? [currentPos.lat, currentPos.lon] : [35.6762, 139.6503];
   return (
     <MapContainer center={center} zoom={17} style={{ height: '100%', width: '100%' }} zoomControl={false} attributionControl={false} touchZoom scrollWheelZoom>
@@ -402,7 +425,7 @@ const GameMap = ({ currentPos, waypoints, routeSegments, gpsDrops, tradeMarkers,
       <MapSizeInvalidator isVisible={isVisible} />
       {currentPos && (
         <>
-          <Marker position={[currentPos.lat, currentPos.lon]} icon={currentPosIcon} />
+          <Marker key={`player-${playerLevel}`} position={[currentPos.lat, currentPos.lon]} icon={getPlayerIcon(playerLevel)} />
           <Circle center={[currentPos.lat, currentPos.lon]} radius={100}
             pathOptions={{ color: '#22c55e', fillColor: '#22c55e', fillOpacity: 0.07, weight: 1.5, dashArray: '4 4' }} />
         </>
@@ -990,7 +1013,7 @@ export default function App() {
     <div className="flex flex-col h-full relative">
       <div className="relative flex-1 overflow-hidden">
         <GameMap currentPos={currentPos} waypoints={waypoints} routeSegments={routeSegments}
-          gpsDrops={gpsDrops} tradeMarkers={tradeMarkers} recenterTrigger={recenterTrigger} isVisible={activeTab === 'home'} />
+          gpsDrops={gpsDrops} tradeMarkers={tradeMarkers} recenterTrigger={recenterTrigger} isVisible={activeTab === 'home'} playerLevel={level} />
         <div className="absolute top-3 right-3 z-[500]">
           <div className={`text-[10px] font-bold px-2 py-1 rounded-full shadow ${currentPos ? 'bg-green-500 text-white' : 'bg-yellow-400 text-yellow-900'}`}>
             {currentPos ? `📡 ±${gpsAccuracy}m` : '📡 取得中...'}
