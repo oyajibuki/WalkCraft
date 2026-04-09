@@ -251,8 +251,25 @@ export default function App() {
     setProfileChecked(false);
     loadPlayerData(authUser.id);
     loadProfile(authUser.id);
-    loadGeoDrops();
+    loadGpsDrops();
+    loadTradeOffers();
   }, [authUser]);
+
+  // --- リアルタイム: 交換条件の追加/削除を全ユーザーに反映 ---
+  useEffect(() => {
+    const channel = supabase.channel('trade_offers_realtime')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'trade_offers' }, (payload) => {
+        const d = payload.new;
+        setGeoDrops(p => [toTradeItem(d), ...p.filter(x => x.id !== d.id)]);
+        if (d.lat && d.lon) setTradeMarkers(p => [...p.filter(x => x.id !== d.id), { id: d.id, lat: d.lat, lon: d.lon }]);
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'trade_offers' }, (payload) => {
+        setGeoDrops(p => p.filter(x => x.id !== payload.old.id));
+        setTradeMarkers(p => p.filter(x => x.id !== payload.old.id));
+      })
+      .subscribe();
+    return () => supabase.removeChannel(channel);
+  }, []);
 
   const loadPlayerData = async (userId) => {
     const { data } = await supabase.from('player_data').select('*').eq('id', userId).single();
@@ -274,10 +291,27 @@ export default function App() {
     setProfileChecked(true);
   };
 
-  const loadGeoDrops = async () => {
+  // DBの行をUI用オブジェクトに変換
+  const toTradeItem = (d) => ({
+    id: d.id,
+    user: d.placer_name || '冒険者',
+    avatar: d.placer_avatar || null,
+    offering: d.offering_item_id,
+    requesting: d.requesting_item_id,
+    message: d.message || '',
+    isOwn: d.user_id === authUser?.id,
+  });
+
+  const loadGpsDrops = async () => {
     const { data } = await supabase.from('geo_drops').select('*');
+    if (data) setGpsDrops(data.map(d => ({ uid: d.id, materialId: d.material_id, lat: d.lat, lon: d.lon })));
+  };
+
+  const loadTradeOffers = async () => {
+    const { data } = await supabase.from('trade_offers').select('*').order('created_at', { ascending: false });
     if (data) {
-      setGpsDrops(data.map(d => ({ uid: d.id, materialId: d.material_id, lat: d.lat, lon: d.lon })));
+      setGeoDrops(data.map(toTradeItem));
+      setTradeMarkers(data.filter(d => d.lat && d.lon).map(d => ({ id: d.id, lat: d.lat, lon: d.lon })));
     }
   };
 
@@ -441,54 +475,69 @@ export default function App() {
     setSelectedMat1(null); setSelectedMat2(null);
   };
 
-  // --- 交換（GeoDrop） ---
-  const handleGeoScan = () => {
-    setIsScanning(true);
-    setTimeout(() => {
-      setIsScanning(false);
-      if (Math.random() > 0.4) {
-        const pool = ['m1', 'm2', 'm4', 'i1', 'i2'];
-        setGeoDrops(p => [{
-          id: `d${Date.now()}`, user: '見知らぬ冒険者', avatar: null,
-          offering: pool[Math.floor(Math.random() * pool.length)],
-          requesting: pool[Math.floor(Math.random() * pool.length)],
-          message: '交換お願いします！',
-        }, ...p]);
-      } else { showStatus('近くに交換ボックスは見つかりませんでした'); }
-    }, 1500);
-  };
-
-  const handleTradeAccept = (drop) => {
-    if ((inventory[drop.requesting] || 0) > 0) {
-      setInventory(prev => ({
-        ...prev, [drop.requesting]: prev[drop.requesting] - 1,
-        [drop.offering]: (prev[drop.offering] || 0) + 1,
-      }));
-      setGeoDrops(p => p.filter(d => d.id !== drop.id));
-      showStatus(`✅ ${drop.user} と交換成立！ ${getItemData(drop.offering)?.icon} ${getItemData(drop.offering)?.name} を受け取った`);
-    } else {
-      showStatus(`❌ ${getItemData(drop.requesting)?.name} が足りません`);
+  // --- 交換: 承認（RPC経由で双方のインベントリを原子的に更新） ---
+  const handleTradeAccept = async (drop) => {
+    if (drop.isOwn) { showStatus('自分の交換条件は受けられません'); return; }
+    if ((inventory[drop.requesting] || 0) < 1) {
+      showStatus(`❌ ${getItemData(drop.requesting)?.name} が足りません`); return;
     }
+    const { data, error } = await supabase.rpc('accept_trade', {
+      p_trade_id: drop.id,
+      p_acceptor_id: authUser.id,
+    });
+    if (error || !data?.success) {
+      showStatus(`❌ 交換に失敗しました（${data?.error ?? error?.message}）`); return;
+    }
+    // ローカルのインベントリを即時反映（DB保存は自動デバウンス）
+    setInventory(prev => ({
+      ...prev,
+      [drop.requesting]: (prev[drop.requesting] || 0) - 1,
+      [drop.offering]: (prev[drop.offering] || 0) + 1,
+    }));
+    // リストとマップから削除（リアルタイムでも来るが即時反映）
+    setGeoDrops(p => p.filter(d => d.id !== drop.id));
+    setTradeMarkers(p => p.filter(t => t.id !== drop.id));
+    const icon = getItemData(drop.offering)?.icon ?? '';
+    const name = getItemData(drop.offering)?.name ?? '';
+    showStatus(`✅ ${data.placer_name} と交換成立！ ${icon} ${name} を受け取った`);
   };
 
-  const handleCreateTrade = () => {
+  // --- 交換: 設置（Supabaseに保存） ---
+  const handleCreateTrade = async () => {
     if (!tradeOffer || !tradeRequest || (inventory[tradeOffer] || 0) <= 0) return;
-    const myName = profile?.display_name ?? '自分';
+    const myName = profile?.display_name ?? '冒険者';
     const myAvatar = profile?.avatar_url ?? authUser?.user_metadata?.avatar_url ?? null;
-    setInventory(prev => ({ ...prev, [tradeOffer]: prev[tradeOffer] - 1 }));
-    const newDrop = {
-      id: `my${Date.now()}`, user: myName, avatar: myAvatar,
-      offering: tradeOffer, requesting: tradeRequest,
-      message: tradeMessage || '交換希望',
-    };
-    setGeoDrops(p => [newDrop, ...p]);
 
-    // 地図にマーカー追加
-    if (currentPos) {
-      setTradeMarkers(p => [...p, { id: newDrop.id, lat: currentPos.lat, lon: currentPos.lon }]);
+    // アイテムを先に減らす
+    setInventory(prev => ({ ...prev, [tradeOffer]: prev[tradeOffer] - 1 }));
+
+    const { error } = await supabase.from('trade_offers').insert({
+      user_id: authUser.id,
+      offering_item_id: tradeOffer,
+      requesting_item_id: tradeRequest,
+      message: tradeMessage || '交換希望',
+      placer_name: myName,
+      placer_avatar: myAvatar,
+      lat: currentPos?.lat ?? null,
+      lon: currentPos?.lon ?? null,
+    });
+
+    if (error) {
+      // 失敗したらアイテムを戻す
+      setInventory(prev => ({ ...prev, [tradeOffer]: (prev[tradeOffer] || 0) + 1 }));
+      showStatus('❌ 設置に失敗しました'); return;
     }
     setTradeOffer(''); setTradeRequest(''); setTradeMessage('');
-    showStatus('🔄 交換条件をマップに設置しました');
+    showStatus('🔄 交換条件をマップに設置しました！');
+  };
+
+  // --- 自分の交換条件を取り下げる ---
+  const handleCancelTrade = async (drop) => {
+    const { error } = await supabase.from('trade_offers').delete().eq('id', drop.id);
+    if (error) { showStatus('❌ 取り下げに失敗しました'); return; }
+    // アイテムを返却
+    setInventory(prev => ({ ...prev, [drop.offering]: (prev[drop.offering] || 0) + 1 }));
+    showStatus('↩️ 交換条件を取り下げました');
   };
 
   // --- 建設 ---
@@ -726,35 +775,33 @@ export default function App() {
         <h2 className="text-xl font-black flex items-center gap-2">
           🔄 交換
         </h2>
-        <span className="text-[10px] bg-slate-800 px-2 py-1 rounded border border-slate-700">アイテム交換</span>
+        <span className="text-[10px] bg-slate-800 px-2 py-1 rounded border border-slate-700">{geoDrops.length}件</span>
       </div>
-      <button onClick={handleGeoScan} disabled={isScanning}
-        className="w-full bg-teal-500 text-teal-950 py-4 rounded-xl font-black flex justify-center items-center gap-2 active:scale-95 transition-transform mb-4 shadow-lg disabled:opacity-60">
-        {isScanning ? '🔍 検索中...' : '近くの交換ボックスを探す'}
-      </button>
       <div className="flex-1 bg-slate-800/50 rounded-3xl p-4 border border-slate-700 overflow-y-auto mb-4">
         <h3 className="text-sm font-bold text-teal-300 mb-3 flex items-center gap-1">
-          <MapPin className="w-4 h-4" /> 交換リスト
+          <MapPin className="w-4 h-4" /> みんなの交換リスト
         </h3>
         {geoDrops.length === 0
-          ? <p className="text-center text-slate-500 text-sm py-8 font-bold">近くに交換ボックスはありません。</p>
+          ? <p className="text-center text-slate-500 text-sm py-8 font-bold">まだ交換条件がありません。<br/>最初に設置してみよう！</p>
           : (
             <div className="space-y-3">
               {geoDrops.map(drop => {
-                const canAccept = (inventory[drop.requesting] || 0) > 0;
+                const canAccept = !drop.isOwn && (inventory[drop.requesting] || 0) > 0;
                 const offerData = getItemData(drop.offering);
                 const reqData = getItemData(drop.requesting);
                 return (
-                  <div key={drop.id} className="rounded-2xl p-4 border bg-slate-800 border-slate-600">
-                    {/* ユーザー情報 */}
-                    <div className="flex items-center gap-2 mb-2">
-                      {drop.avatar
-                        ? <img src={drop.avatar} className="w-6 h-6 rounded-full object-cover" alt="" />
-                        : <div className="w-6 h-6 rounded-full bg-slate-600 flex items-center justify-center text-xs">🧑</div>
-                      }
-                      <span className="text-xs font-bold text-slate-300">{drop.user}</span>
+                  <div key={drop.id} className={`rounded-2xl p-4 border ${drop.isOwn ? 'bg-slate-700/60 border-orange-600/40' : 'bg-slate-800 border-slate-600'}`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        {drop.avatar
+                          ? <img src={drop.avatar} className="w-6 h-6 rounded-full object-cover" alt="" />
+                          : <div className="w-6 h-6 rounded-full bg-slate-600 flex items-center justify-center text-xs">🧑</div>
+                        }
+                        <span className="text-xs font-bold text-slate-300">{drop.user}</span>
+                        {drop.isOwn && <span className="text-[10px] bg-orange-500/30 text-orange-300 px-1.5 py-0.5 rounded-full">自分</span>}
+                      </div>
                     </div>
-                    <p className="text-sm mb-3">💬 {drop.message}</p>
+                    <p className="text-xs text-slate-400 mb-3">💬 {drop.message}</p>
                     <div className="flex items-center justify-between bg-slate-900 p-3 rounded-xl border border-slate-700">
                       <div className="flex items-center gap-3">
                         <div className="text-center">
@@ -767,10 +814,16 @@ export default function App() {
                           <span className="text-[10px] text-red-400 font-bold block mt-1">渡す</span>
                         </div>
                       </div>
-                      <button onClick={() => handleTradeAccept(drop)}
-                        className={`px-4 py-3 rounded-xl text-sm font-black transition-colors active:scale-95 ${canAccept ? 'bg-teal-500 text-teal-950' : 'bg-slate-700 text-slate-500 cursor-not-allowed'}`}>
-                        交換する
-                      </button>
+                      {drop.isOwn
+                        ? <button onClick={() => handleCancelTrade(drop)}
+                            className="px-3 py-3 rounded-xl text-xs font-black bg-slate-600 text-slate-300 active:scale-95 transition-colors">
+                            取り下げ
+                          </button>
+                        : <button onClick={() => handleTradeAccept(drop)}
+                            className={`px-4 py-3 rounded-xl text-sm font-black transition-colors active:scale-95 ${canAccept ? 'bg-teal-500 text-teal-950' : 'bg-slate-700 text-slate-500 cursor-not-allowed'}`}>
+                            交換する
+                          </button>
+                      }
                     </div>
                   </div>
                 );
