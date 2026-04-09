@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Home, Gift, Hammer, Coins, Sparkles, AlertCircle, ArrowRightLeft, MapPin, Footprints, Hand, ArrowDownCircle, Navigation } from 'lucide-react';
+import { Home, Gift, Hammer, Coins, Sparkles, AlertCircle, ArrowRightLeft, MapPin, Footprints, Hand, ArrowDownCircle, Navigation, Building2 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Polyline, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -21,14 +21,15 @@ const waypointIcon = L.divIcon({
   html: '<div style="width:8px;height:8px;background:#94a3b8;border:2px solid white;border-radius:50%"></div>',
   className: '', iconSize: [8, 8], iconAnchor: [4, 4],
 });
-const matIcon = (m) => L.divIcon({
-  html: `<div style="font-size:22px;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.6));line-height:1">${m.icon}</div>`,
-  className: '', iconSize: [28, 28], iconAnchor: [14, 14],
-});
-const botIcon = L.divIcon({
-  html: '<div style="font-size:22px;line-height:1">🤖</div>',
-  className: '', iconSize: [28, 28], iconAnchor: [14, 14],
-});
+// 素材・クラフトアイテム両対応
+const getItemById = (id) => MATERIALS[id] || RECIPES.find(r => r.id === id);
+const matIcon = (id) => {
+  const item = getItemById(id);
+  return L.divIcon({
+    html: `<div style="font-size:22px;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.6));line-height:1">${item?.icon ?? '❓'}</div>`,
+    className: '', iconSize: [28, 28], iconAnchor: [14, 14],
+  });
+};
 
 // --- データ定義 ---
 const MATERIALS = {
@@ -51,9 +52,12 @@ const RECIPES = [
   { id: 'i7', name: '通信機', icon: '📻', reqLevel: 4, materials: ['m4', 'm7'], desc: '電波をキャッチする。', price: 300 },
 ];
 
-const BOT_GEO_DROPS = [
-  { id: 'bot1', user: '🤖 冒険者アリス', offering: 'm3', requesting: 'm1', message: '水をあげるので木の枝と交換！', isBot: true },
-  { id: 'bot2', user: '🤖 旅人ケン', offering: 'm4', requesting: 'm2', message: '鉄くず余ってます。石ころと交換！', isBot: true },
+// --- 街づくり（拠点アップグレード）---
+const BASE_STAGES = [
+  { stage: 1, name: 'テントキャンプ', icon: '🏕️', desc: '焚き火を囲む小さなキャンプ。旅の始まり。', cost: { m1: 5, m2: 3 } },
+  { stage: 2, name: 'ログハウス', icon: '🏠', desc: '石の斧で木を切り、丸太小屋を建てた。', cost: { i1: 2, m4: 3 } },
+  { stage: 3, name: '鉄の砦', icon: '🏯', desc: '鉄のインゴットで補強した頑丈な拠点。', cost: { i3: 3, i5: 1 } },
+  { stage: 4, name: '研究施設', icon: '🏛️', desc: '通信機と魔法の薬で動く高度な研究拠点。解放できるレシピが増える！', cost: { i7: 1, i6: 2 } },
 ];
 
 const INITIAL_INVENTORY = { m1: 5, m2: 5, m3: 2, m4: 1, m5: 0, m6: 0, m7: 0, i1: 0, i2: 0, i3: 0, i4: 0, i5: 0, i6: 0, i7: 0 };
@@ -103,7 +107,7 @@ const RecenterOnTrigger = ({ pos, trigger }) => {
 };
 
 // --- 地図コンポーネント ---
-const GameMap = ({ currentPos, waypoints, routeSegments, gpsDrops, botPositions, recenterTrigger }) => {
+const GameMap = ({ currentPos, waypoints, routeSegments, gpsDrops, recenterTrigger }) => {
   const defaultCenter = [35.6762, 139.6503];
   const center = currentPos ? [currentPos.lat, currentPos.lon] : defaultCenter;
 
@@ -133,14 +137,9 @@ const GameMap = ({ currentPos, waypoints, routeSegments, gpsDrops, botPositions,
         <Polyline key={i} positions={seg} pathOptions={{ color: '#3b82f6', weight: 4, opacity: 0.8 }} />
       ))}
 
-      {/* マップ上の素材 */}
+      {/* マップ上のアイテム（素材・クラフト品両対応） */}
       {gpsDrops.map(d => (
-        <Marker key={d.uid} position={[d.lat, d.lon]} icon={matIcon(MATERIALS[d.materialId])} />
-      ))}
-
-      {/* BOTマーカー */}
-      {botPositions.map((b, i) => (
-        <Marker key={`bot-${i}`} position={[b.lat, b.lon]} icon={botIcon} />
+        <Marker key={d.uid} position={[d.lat, d.lon]} icon={matIcon(d.materialId)} />
       ))}
     </MapContainer>
   );
@@ -175,12 +174,11 @@ export default function App() {
   const [showDropModal, setShowDropModal] = useState(false);
   const [itemToDrop, setItemToDrop] = useState('');
   const [isScanning, setIsScanning] = useState(false);
-  const [geoDrops, setGeoDrops] = useState(BOT_GEO_DROPS);
+  const [geoDrops, setGeoDrops] = useState([]);
+  const [baseStage, setBaseStage] = useState(saved.baseStage ?? 0);
   const [tradeOffer, setTradeOffer] = useState('');
   const [tradeRequest, setTradeRequest] = useState('');
   const [tradeMessage, setTradeMessage] = useState('');
-
-  const botPositions = useRef([]);
 
   // --- GPS 追跡 ---
   useEffect(() => {
@@ -193,13 +191,6 @@ export default function App() {
         const p = { lat: pos.coords.latitude, lon: pos.coords.longitude };
         setCurrentPos(p);
         setGpsAccuracy(Math.round(pos.coords.accuracy));
-        // BOT位置を最初の GPS 取得時に設定
-        if (botPositions.current.length === 0) {
-          botPositions.current = [
-            { lat: p.lat + 0.0008, lon: p.lon + 0.0005 },
-            { lat: p.lat - 0.0006, lon: p.lon + 0.0009 },
-          ];
-        }
       },
       (err) => showStatus(`GPS取得エラー: ${err.message}`),
       { enableHighAccuracy: true, maximumAge: 3000, timeout: 15000 }
@@ -211,7 +202,7 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       distance, points, level, exp, inventory, collection,
-      waypoints, routeSegments, gpsDrops,
+      waypoints, routeSegments, gpsDrops, baseStage,
     }));
   }, [distance, points, level, exp, inventory, collection, waypoints, routeSegments, gpsDrops]);
 
@@ -431,6 +422,91 @@ export default function App() {
     ? gpsDrops.filter(d => haversineM(currentPos.lat, currentPos.lon, d.lat, d.lon) <= 100).length
     : 0;
 
+  // --- 建設 ---
+  const handleBuild = () => {
+    const next = BASE_STAGES[baseStage]; // baseStage=0 → BASE_STAGES[0] = stage1
+    if (!next) return;
+    const canBuild = Object.entries(next.cost).every(([id, qty]) => (inventory[id] || 0) >= qty);
+    if (!canBuild) return;
+    setInventory(prev => {
+      const n = { ...prev };
+      Object.entries(next.cost).forEach(([id, qty]) => { n[id] -= qty; });
+      return n;
+    });
+    setBaseStage(prev => prev + 1);
+    showStatus(`🎉 ${next.name} が完成した！`);
+  };
+
+  const renderBase = () => {
+    const current = BASE_STAGES[baseStage - 1];
+    const next = BASE_STAGES[baseStage];
+    const baseIcon = current ? current.icon : '🌿';
+    const baseName = current ? current.name : '荒野';
+    const baseDesc = current ? current.desc : 'まだ何もない荒野。クラフトして建設しよう！';
+
+    return (
+      <div className="flex flex-col h-full p-4 bg-amber-50 overflow-y-auto">
+        <h2 className="text-xl font-black mb-4 tracking-tight text-amber-900">🏘️ 拠点</h2>
+
+        {/* 現在の拠点 */}
+        <div className="bg-white rounded-3xl p-6 shadow-sm border border-amber-200 mb-4 text-center">
+          <div className="text-7xl mb-3">{baseIcon}</div>
+          <h3 className="text-lg font-black text-slate-800">{baseName}</h3>
+          <p className="text-sm text-slate-500 mt-1">{baseDesc}</p>
+          <div className="mt-3 flex justify-center gap-1">
+            {[0, 1, 2, 3, 4].map(i => (
+              <div key={i} className={`w-4 h-2 rounded-full ${i < baseStage ? 'bg-amber-500' : 'bg-slate-200'}`} />
+            ))}
+          </div>
+          <p className="text-xs text-slate-400 mt-1">Lv {baseStage} / 4</p>
+        </div>
+
+        {/* 次のアップグレード */}
+        {next ? (
+          <div className="bg-white rounded-3xl p-5 shadow-sm border border-amber-200">
+            <h3 className="text-sm font-black text-amber-700 mb-3">次のアップグレード</h3>
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-4xl">{next.icon}</span>
+              <div>
+                <p className="font-black text-slate-800">{next.name}</p>
+                <p className="text-xs text-slate-500">{next.desc}</p>
+              </div>
+            </div>
+            <p className="text-xs font-bold text-slate-600 mb-2">必要素材:</p>
+            <div className="space-y-2 mb-4">
+              {Object.entries(next.cost).map(([id, qty]) => {
+                const item = getItemById(id);
+                const have = inventory[id] || 0;
+                const ok = have >= qty;
+                return (
+                  <div key={id} className={`flex items-center justify-between px-3 py-2 rounded-xl ${ok ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+                    <span className="text-sm">{item?.icon} {item?.name}</span>
+                    <span className={`text-sm font-black ${ok ? 'text-green-600' : 'text-red-500'}`}>
+                      {have} / {qty} {ok ? '✅' : '❌'}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            <button
+              onClick={handleBuild}
+              disabled={!Object.entries(next.cost).every(([id, qty]) => (inventory[id] || 0) >= qty)}
+              className="w-full py-4 rounded-2xl font-black text-lg active:scale-95 transition-transform shadow-md disabled:opacity-40 disabled:cursor-not-allowed bg-amber-500 text-white"
+            >
+              🔨 建設する
+            </button>
+          </div>
+        ) : (
+          <div className="bg-amber-100 rounded-3xl p-6 text-center border border-amber-300">
+            <p className="text-3xl mb-2">🏆</p>
+            <p className="font-black text-amber-800">すべての拠点を建設完了！</p>
+            <p className="text-sm text-amber-600 mt-1">あなたは伝説の開拓者です</p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderHome = () => (
     <div className="flex flex-col h-full relative">
       {/* 地図 */}
@@ -440,7 +516,6 @@ export default function App() {
           waypoints={waypoints}
           routeSegments={routeSegments}
           gpsDrops={gpsDrops}
-          botPositions={botPositions.current}
           recenterTrigger={recenterTrigger}
         />
 
@@ -740,21 +815,23 @@ export default function App() {
         {activeTab === 'home' && renderHome()}
         {activeTab === 'gacha' && renderGacha()}
         {activeTab === 'craft' && renderCraft()}
+        {activeTab === 'base' && renderBase()}
         {activeTab === 'geodrop' && renderGeoDrop()}
       </main>
 
       <nav className="bg-white border-t border-slate-200 flex justify-around p-2 z-30 shrink-0"
         style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
         {[
-          { tab: 'home', icon: <Home className="w-6 h-6" />, label: 'Home', color: 'text-blue-600 bg-blue-50' },
-          { tab: 'gacha', icon: <Gift className="w-6 h-6" />, label: '探索', color: 'text-yellow-500 bg-yellow-50' },
-          { tab: 'craft', icon: <Hammer className="w-6 h-6" />, label: 'クラフト', color: 'text-orange-500 bg-orange-50' },
-          { tab: 'geodrop', icon: <ArrowRightLeft className="w-6 h-6" />, label: 'GeoDrop', color: 'text-teal-600 bg-teal-50' },
+          { tab: 'home', icon: <Home className="w-5 h-5" />, label: 'Home', color: 'text-blue-600 bg-blue-50' },
+          { tab: 'gacha', icon: <Gift className="w-5 h-5" />, label: '探索', color: 'text-yellow-500 bg-yellow-50' },
+          { tab: 'craft', icon: <Hammer className="w-5 h-5" />, label: 'クラフト', color: 'text-orange-500 bg-orange-50' },
+          { tab: 'geodrop', icon: <ArrowRightLeft className="w-5 h-5" />, label: 'GeoDrop', color: 'text-teal-600 bg-teal-50' },
+          { tab: 'base', icon: <Building2 className="w-5 h-5" />, label: '拠点', color: 'text-amber-600 bg-amber-50' },
         ].map(({ tab, icon, label, color }) => (
           <button key={tab} onClick={() => setActiveTab(tab)}
-            className={`flex flex-col items-center p-2 rounded-xl w-16 transition-all ${activeTab === tab ? `${color} -translate-y-1` : 'text-slate-400'}`}>
+            className={`flex flex-col items-center p-2 rounded-xl w-14 transition-all ${activeTab === tab ? `${color} -translate-y-1` : 'text-slate-400'}`}>
             {icon}
-            <span className="text-[10px] mt-1 font-black">{label}</span>
+            <span className="text-[9px] mt-1 font-black">{label}</span>
           </button>
         ))}
       </nav>
