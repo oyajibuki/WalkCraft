@@ -148,29 +148,86 @@ const GameMap = ({ currentPos, waypoints, routeSegments, gpsDrops, recenterTrigg
 
 // --- ログイン画面 ---
 const LoginScreen = () => {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(null); // 'google' | 'twitter' | 'line' | null
+
+  const redirectTo = window.location.origin + window.location.pathname;
+
   const handleGoogle = async () => {
-    setLoading(true);
+    setLoading('google');
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin + window.location.pathname },
+      options: { redirectTo },
     });
   };
+
+  const handleTwitter = async () => {
+    setLoading('twitter');
+    await supabase.auth.signInWithOAuth({
+      provider: 'twitter',
+      options: { redirectTo },
+    });
+  };
+
+  const handleLine = () => {
+    setLoading('line');
+    const lineChannelId = import.meta.env.VITE_LINE_CHANNEL_ID;
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const edgeFnUrl = `${supabaseUrl}/functions/v1/line-auth`;
+    const state = Math.random().toString(36).substring(2);
+    const lineUrl =
+      `https://access.line.me/oauth2/v2.1/authorize` +
+      `?response_type=code` +
+      `&client_id=${lineChannelId}` +
+      `&redirect_uri=${encodeURIComponent(edgeFnUrl)}` +
+      `&state=${state}` +
+      `&scope=profile%20openid`;
+    window.location.href = lineUrl;
+  };
+
   return (
     <div className="flex flex-col items-center justify-center h-full bg-gradient-to-b from-green-50 to-blue-100 p-8">
       <div className="text-8xl mb-6 drop-shadow-lg">🗺️</div>
       <h1 className="text-3xl font-black text-slate-800 mb-2 tracking-tight">WalkCraft</h1>
-      <p className="text-slate-500 mb-12 text-center text-sm leading-relaxed">
+      <p className="text-slate-500 mb-10 text-center text-sm leading-relaxed">
         歩いて、集めて、街を作る<br />リアル散歩RPG
       </p>
-      <button
-        onClick={handleGoogle}
-        disabled={loading}
-        className="w-full max-w-xs py-4 bg-white border border-slate-200 rounded-2xl font-bold text-slate-700 shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-transform disabled:opacity-60"
-      >
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="" />
-        {loading ? 'ログイン中...' : 'Googleでログイン'}
-      </button>
+
+      <div className="w-full max-w-xs flex flex-col gap-3">
+        {/* LINE */}
+        <button
+          onClick={handleLine}
+          disabled={!!loading}
+          className="w-full py-4 rounded-2xl font-bold text-white shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-transform disabled:opacity-60"
+          style={{ backgroundColor: '#06C755' }}
+        >
+          <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
+            <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.105.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
+          </svg>
+          {loading === 'line' ? 'ログイン中...' : 'LINEでログイン'}
+        </button>
+
+        {/* Google */}
+        <button
+          onClick={handleGoogle}
+          disabled={!!loading}
+          className="w-full py-4 bg-white border border-slate-200 rounded-2xl font-bold text-slate-700 shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-transform disabled:opacity-60"
+        >
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="" />
+          {loading === 'google' ? 'ログイン中...' : 'Googleでログイン'}
+        </button>
+
+        {/* X (Twitter) */}
+        <button
+          onClick={handleTwitter}
+          disabled={!!loading}
+          className="w-full py-4 bg-black border border-slate-700 rounded-2xl font-bold text-white shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-transform disabled:opacity-60"
+        >
+          <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+          </svg>
+          {loading === 'twitter' ? 'ログイン中...' : 'Xでログイン'}
+        </button>
+      </div>
     </div>
   );
 };
