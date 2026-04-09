@@ -1,0 +1,118 @@
+Walk & Craft 詳細設計書
+
+1. 画面設計・ルーティング
+
+SPA（Single Page Application）として構築し、ボトムナビゲーションによるステート切り替えで画面を遷移する。
+
+activeTab ステートによる切り替え:
+
+'home': メインマップ、記録、ドロップ回収・設置
+
+'gacha': ポイント消費による素材獲得
+
+'craft': インベントリ表示、アイテム売却、クラフト実行
+
+'geodrop': 非同期トレードの検索と出品
+
+2. データ構造設計
+
+2.1. マスターデータ（定数）
+
+アプリケーション内で不変のマスターデータ。
+
+// 素材マスター
+const MATERIALS = {
+  m1: { id: 'm1', name: '木の枝', icon: '🪵', rarity: 1, price: 5 },
+  // ...
+};
+
+// レシピマスター
+const RECIPES = [
+  { id: 'i1', name: '石の斧', icon: '🪓', reqLevel: 1, materials: ['m1', 'm2'], desc: '...', price: 30 },
+  // ...
+];
+
+
+2.2. アプリケーションステート (React useState)
+
+ユーザー情報:
+
+distance (Number): 累計距離
+
+points (Number): 所持ポイント
+
+level (Number): 現在のレベル
+
+exp (Number): 現在のレベルにおける獲得経験値
+
+所持品管理:
+
+inventory (Object): { [itemId]: count } の形式で個数を管理。
+
+collection (Array): 初回作成済みアイテムIDのリスト。
+
+マップ機能:
+
+localDrops (Array): Home画面に落ちている素材IDのリスト。
+
+itemToDrop (String): マップに設置（捨てる）するために選択中のアイテムID。
+
+クラフト機能:
+
+selectedMat1, selectedMat2 (String | null): 選択中の素材ID。
+
+GeoDrop機能:
+
+geoDrops (Array): 周囲で発見したトレードデータのリスト。
+
+形式: { id, user, offering(出すID), requesting(要求ID), message }
+
+tradeOffer, tradeRequest (String): 自身が出品するために選択中のアイテムID。
+
+3. 主要ロジック設計
+
+3.1. クラフト判定アルゴリズム (handleCraft)
+
+selectedMat1 と selectedMat2 の両方が入力されているかチェック。
+
+RECIPES 配列を find で検索。
+
+条件: recipe.materials.includes(selectedMat1) AND recipe.materials.includes(selectedMat2)
+
+重複素材レシピ（例: m1 + m1）の対応: selectedMat1 === selectedMat2 の場合、recipe.materials[0] === recipe.materials[1] であるかもチェック。
+
+レシピが見つかった場合、level >= recipe.reqLevel か判定。
+
+OK: インベントリ更新、経験値加算処理。
+
+NG: レベル不足エラーメッセージ設定。
+
+経験値加算処理:
+
+collection.includes(recipe.id) が false の場合、collection に追加し exp += 2。
+
+true の場合、exp += 1。
+
+3.2. レベルアップ監視 (useEffect)
+
+useEffect(() => {
+  const requiredExp = level * 3;
+  if (exp >= requiredExp) {
+    setLevel(prev => prev + 1);
+    setExp(prev => prev - requiredExp); // 余剰経験値は持ち越し
+    alert('レベルアップ！');
+  }
+}, [exp, level]);
+
+
+3.3. バックエンド通信設計（今後の拡張用想定）
+
+現状はクライアントサイドのみで完結しているが、将来的にサーバー連携を行う際のAPI想定。
+
+POST /api/walk : 歩数データを送信し、ポイント・マップ上の素材湧き結果を受信。
+
+GET /api/geodrop/nearby : 現在地周辺に設置された他プレイヤーのGeoDropを取得。
+
+POST /api/geodrop/trade : GeoDropの交換成立をサーバーに送信し、インベントリを同期。
+
+POST /api/geodrop/create : 自身の交換条件をサーバーに登録し、マップ上に配置。
