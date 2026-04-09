@@ -98,13 +98,26 @@ const RecenterOnTrigger = ({ pos, trigger }) => {
   return null;
 };
 
+// --- Leaflet サイズ再計算（display:none→flex 切替時に必要） ---
+const MapSizeInvalidator = ({ isVisible }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (isVisible) {
+      const t = setTimeout(() => map.invalidateSize(), 50);
+      return () => clearTimeout(t);
+    }
+  }, [isVisible]);
+  return null;
+};
+
 // --- 地図コンポーネント ---
-const GameMap = ({ currentPos, waypoints, routeSegments, gpsDrops, tradeMarkers, recenterTrigger }) => {
+const GameMap = ({ currentPos, waypoints, routeSegments, gpsDrops, tradeMarkers, recenterTrigger, isVisible }) => {
   const center = currentPos ? [currentPos.lat, currentPos.lon] : [35.6762, 139.6503];
   return (
     <MapContainer center={center} zoom={17} style={{ height: '100%', width: '100%' }} zoomControl={false} attributionControl={false} touchZoom scrollWheelZoom>
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       <RecenterOnTrigger pos={currentPos} trigger={recenterTrigger} />
+      <MapSizeInvalidator isVisible={isVisible} />
       {currentPos && (
         <>
           <Marker position={[currentPos.lat, currentPos.lon]} icon={currentPosIcon} />
@@ -227,6 +240,7 @@ export default function App() {
   const [tradeMessage, setTradeMessage] = useState('');
 
   const saveTimerRef = useRef(null);
+  const authUserRef = useRef(null);
 
   // --- 認証チェック ---
   useEffect(() => {
@@ -238,7 +252,9 @@ export default function App() {
     }).catch(() => { clearTimeout(timeout); setAuthLoading(false); });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
-      setAuthUser(session?.user ?? null);
+      const user = session?.user ?? null;
+      setAuthUser(user);
+      authUserRef.current = user;
       setAuthLoading(false);
     });
     return () => { subscription.unsubscribe(); clearTimeout(timeout); };
@@ -291,7 +307,7 @@ export default function App() {
     setProfileChecked(true);
   };
 
-  // DBの行をUI用オブジェクトに変換
+  // DBの行をUI用オブジェクトに変換（authUserRef経由でリアルタイム時も正しく判定）
   const toTradeItem = (d) => ({
     id: d.id,
     user: d.placer_name || '冒険者',
@@ -299,7 +315,7 @@ export default function App() {
     offering: d.offering_item_id,
     requesting: d.requesting_item_id,
     message: d.message || '',
-    isOwn: d.user_id === authUser?.id,
+    isOwn: d.user_id === (authUserRef.current?.id ?? authUser?.id),
   });
 
   const loadGpsDrops = async () => {
@@ -316,12 +332,19 @@ export default function App() {
   };
 
   // --- GPS追跡 ---
+  const firstPosRef = useRef(false);
   useEffect(() => {
     if (!navigator.geolocation) { showStatus('⚠️ GPSに対応していません'); return; }
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
-        setCurrentPos({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+        const newPos = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+        setCurrentPos(newPos);
         setGpsAccuracy(Math.round(pos.coords.accuracy));
+        // 初回GPS取得時に自動でマップを中央に移動
+        if (!firstPosRef.current) {
+          firstPosRef.current = true;
+          setRecenterTrigger(t => t + 1);
+        }
       },
       (err) => showStatus(`GPS取得エラー: ${err.message}`),
       { enableHighAccuracy: true, maximumAge: 3000, timeout: 15000 }
@@ -621,7 +644,7 @@ export default function App() {
     <div className="flex flex-col h-full relative">
       <div className="relative flex-1 overflow-hidden">
         <GameMap currentPos={currentPos} waypoints={waypoints} routeSegments={routeSegments}
-          gpsDrops={gpsDrops} tradeMarkers={tradeMarkers} recenterTrigger={recenterTrigger} />
+          gpsDrops={gpsDrops} tradeMarkers={tradeMarkers} recenterTrigger={recenterTrigger} isVisible={activeTab === 'home'} />
         <div className="absolute top-3 right-3 z-[500]">
           <div className={`text-[10px] font-bold px-2 py-1 rounded-full shadow ${currentPos ? 'bg-green-500 text-white' : 'bg-yellow-400 text-yellow-900'}`}>
             {currentPos ? `📡 ±${gpsAccuracy}m` : '📡 取得中...'}
