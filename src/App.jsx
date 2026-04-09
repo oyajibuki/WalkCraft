@@ -39,30 +39,74 @@ const matIcon = (id) => {
 
 // --- データ定義 ---
 const MATERIALS = {
-  m1: { id: 'm1', name: '木の枝', icon: '🪵', rarity: 1, price: 5 },
-  m2: { id: 'm2', name: '石ころ', icon: '🪨', rarity: 1, price: 5 },
-  m3: { id: 'm3', name: 'きれいな水', icon: '💧', rarity: 2, price: 15 },
-  m4: { id: 'm4', name: '鉄くず', icon: '🔩', rarity: 2, price: 15 },
-  m5: { id: 'm5', name: '謎の草', icon: '🌿', rarity: 3, price: 30 },
-  m6: { id: 'm6', name: '火の粉', icon: '🔥', rarity: 3, price: 30 },
-  m7: { id: 'm7', name: '街の噂', icon: '💬', rarity: 4, price: 50 },
+  // Tier 1 — よく見つかる素材
+  m1:  { id: 'm1',  name: '木の枝',       icon: '🪵', rarity: 1, price: 5   },
+  m2:  { id: 'm2',  name: '石ころ',        icon: '🪨', rarity: 1, price: 5   },
+  m3:  { id: 'm3',  name: 'きれいな水',    icon: '💧', rarity: 1, price: 5   },
+  m5:  { id: 'm5',  name: '薬草',          icon: '🌿', rarity: 1, price: 5   },
+  m6:  { id: 'm6',  name: '火打ち石',      icon: '🔥', rarity: 1, price: 8   },
+  m16: { id: 'm16', name: 'ツタ',          icon: '🍃', rarity: 1, price: 5   },
+  m17: { id: 'm17', name: '鳥の羽',        icon: '🪶', rarity: 1, price: 5   },
+  m18: { id: 'm18', name: '謎のキノコ',    icon: '🍄', rarity: 1, price: 5   },
+  // Tier 2 — やや珍しい素材
+  m4:  { id: 'm4',  name: '鉄鉱石',        icon: '🔩', rarity: 2, price: 15  },
+  m8:  { id: 'm8',  name: '粘土',          icon: '🏺', rarity: 2, price: 10  },
+  m9:  { id: 'm9',  name: '砂',            icon: '⏳', rarity: 2, price: 10  },
+  m10: { id: 'm10', name: '石炭',          icon: '⬛', rarity: 2, price: 15  },
+  m11: { id: 'm11', name: '銅鉱石',        icon: '🟤', rarity: 2, price: 15  },
+  m12: { id: 'm12', name: 'ゴムの樹液',    icon: '🌰', rarity: 2, price: 15  },
+  // Tier 3 — レアな素材（探索ガチャで入手）
+  m13: { id: 'm13', name: 'ハチミツ',      icon: '🍯', rarity: 3, price: 30  },
+  m14: { id: 'm14', name: '原油',          icon: '🛢️', rarity: 3, price: 50  },
+  m15: { id: 'm15', name: '水晶',          icon: '💎', rarity: 3, price: 50  },
+  m19: { id: 'm19', name: '金鉱石',        icon: '🟡', rarity: 3, price: 80  },
+  // Tier 4 — 超レア素材
+  m7:  { id: 'm7',  name: '街の噂',        icon: '💬', rarity: 4, price: 50  },
+  m20: { id: 'm20', name: '隕石の欠片',    icon: '☄️', rarity: 4, price: 200 },
 };
 const RECIPES = [
-  { id: 'i1', name: '石の斧', icon: '🪓', reqLevel: 1, materials: ['m1', 'm2'], desc: '木を切るのに便利な斧。', price: 30 },
-  { id: 'i2', name: 'キズぐすり', icon: '🩹', reqLevel: 1, materials: ['m3', 'm5'], desc: '少しだけ傷を癒やす。', price: 60 },
-  { id: 'i3', name: '鉄のインゴット', icon: '🧱', reqLevel: 2, materials: ['m2', 'm4'], desc: '様々な武器の素材。', price: 50 },
-  { id: 'i4', name: 'たいまつ', icon: '🔦', reqLevel: 2, materials: ['m1', 'm6'], desc: '暗い夜道を照らす。', price: 60 },
-  { id: 'i5', name: '鉄の剣', icon: '🗡️', reqLevel: 3, materials: ['m1', 'm4'], desc: 'モンスターと戦う武器。', price: 100 },
-  { id: 'i6', name: '魔法の薬', icon: '🧪', reqLevel: 3, materials: ['m5', 'm6'], desc: '不思議な力が湧く。', price: 150 },
-  { id: 'i7', name: '通信機', icon: '📻', reqLevel: 4, materials: ['m4', 'm7'], desc: '電波をキャッチする。', price: 300 },
+  // ── Tier 1（Lv1解放）サバイバル基本 ──
+  { id: 'i1',  name: '石の斧',          icon: '🪓', reqLevel: 1, materials: ['m1', 'm2'],   desc: '木を切るのに便利な斧。建築の基礎。',           price: 30   },
+  { id: 'i2',  name: 'たいまつ',        icon: '🔦', reqLevel: 1, materials: ['m1', 'm6'],   desc: '暗い夜道を照らす。火打ち石で点火。',           price: 25   },
+  { id: 'i3',  name: '弓',              icon: '🏹', reqLevel: 1, materials: ['m1', 'm16'],  desc: '遠くの敵を射る。ツタを弦にした手作り弓。',     price: 30   },
+  { id: 'i4',  name: '矢',              icon: '🪃', reqLevel: 1, materials: ['m1', 'm17'],  desc: '弓の弾丸。鳥の羽で軌道が安定する。',           price: 15   },
+  { id: 'i5',  name: '回復薬',          icon: '🧪', reqLevel: 1, materials: ['m5', 'm5'],   desc: '薬草を調合した回復薬。少し傷が癒える。',       price: 25   },
+  // ── Tier 2（Lv2解放）鉄・建築 ──
+  { id: 'i6',  name: '鉄のインゴット',  icon: '🧱', reqLevel: 2, materials: ['m4', 'm10'],  desc: '石炭で鉄鉱石を精錬。鉄器時代の幕開け。',       price: 50   },
+  { id: 'i7',  name: 'レンガ',          icon: '🏗️', reqLevel: 2, materials: ['m8', 'm10'],  desc: '粘土を石炭で焼いた丈夫な建築素材。',           price: 40   },
+  { id: 'i8',  name: 'ガラス',          icon: '🪟', reqLevel: 2, materials: ['m9', 'm10'],  desc: '砂を高熱で溶かした透明な素材。',               price: 40   },
+  { id: 'i9',  name: '鉄の剣',          icon: '🗡️', reqLevel: 2, materials: ['m4', 'm6'],   desc: '鉄鉱石と火打ち石で鍛えた剣。',                 price: 100  },
+  { id: 'i10', name: '回復薬グレート',  icon: '💊', reqLevel: 2, materials: ['m5', 'm13'],  desc: '薬草にハチミツを加えた高性能回復薬。',         price: 80   },
+  // ── Tier 3（Lv3解放）電気・工業 ──
+  { id: 'i11', name: '銅のインゴット',  icon: '🥉', reqLevel: 3, materials: ['m11', 'm10'], desc: '銅鉱石を精錬した電気伝導体。',                 price: 60   },
+  { id: 'i12', name: '銅線',            icon: '🔌', reqLevel: 3, materials: ['m11', 'm12'], desc: '銅鉱石とゴムで作った電気の通り道。',           price: 80   },
+  { id: 'i13', name: 'ランタン',        icon: '🏮', reqLevel: 3, materials: ['m8', 'm14'],  desc: '粘土の器に原油を注いだランタン。',             price: 70   },
+  { id: 'i14', name: '爆薬',            icon: '💥', reqLevel: 3, materials: ['m18', 'm6'],  desc: '謎のキノコと火打ち石で作った危険な爆薬。',     price: 90   },
+  { id: 'i15', name: '魔法の薬',        icon: '🔮', reqLevel: 3, materials: ['m15', 'm13'], desc: '水晶とハチミツが生む不思議な力の薬。',         price: 150  },
+  // ── Tier 4（Lv4解放）精密・近代 ──
+  { id: 'i16', name: '金のインゴット',  icon: '🥇', reqLevel: 4, materials: ['m19', 'm10'], desc: '金鉱石を精錬した高価な金属。装飾や精密機器に。', price: 150 },
+  { id: 'i17', name: '電球',            icon: '💡', reqLevel: 4, materials: ['m9', 'm15'],  desc: '砂のガラスと水晶のフィラメントで光る。',       price: 120  },
+  { id: 'i18', name: 'プラスチック',    icon: '🧴', reqLevel: 4, materials: ['m14', 'm2'],  desc: '原油と石から生まれた現代の素材。',             price: 100  },
+  { id: 'i19', name: '通信機',          icon: '📻', reqLevel: 4, materials: ['m7', 'm12'],  desc: '街の噂とゴムで作った謎の通信装置。',           price: 300  },
+  { id: 'i20', name: 'ワールドコンパス', icon: '🧭', reqLevel: 4, materials: ['m20', 'm15'], desc: '隕石と水晶が示す、世界の中心への道。伝説の工芸品。', price: 1000 },
 ];
 const BASE_STAGES = [
-  { stage: 1, name: 'テントキャンプ', icon: '🏕️', desc: '焚き火を囲む小さなキャンプ。旅の始まり。', cost: { m1: 5, m2: 3 } },
-  { stage: 2, name: 'ログハウス', icon: '🏠', desc: '石の斧で木を切り、丸太小屋を建てた。', cost: { i1: 2, m4: 3 } },
-  { stage: 3, name: '鉄の砦', icon: '🏯', desc: '鉄のインゴットで補強した頑丈な拠点。', cost: { i3: 3, i5: 1 } },
-  { stage: 4, name: '研究施設', icon: '🏛️', desc: '通信機と魔法の薬で動く高度な研究拠点。', cost: { i7: 1, i6: 2 } },
+  { stage: 1, name: '焚き火キャンプ',   icon: '🔥', phase: 'Phase 1: サバイバル期',   desc: '焚き火を囲む原野のキャンプ。旅の始まり。',                              cost: { m1: 10, m2: 5 } },
+  { stage: 2, name: 'テント',           icon: '⛺', phase: 'Phase 1: サバイバル期',   desc: '雨風をしのげるテント。ツタで編んだベッドも快適。',                       cost: { m1: 20, m16: 5 } },
+  { stage: 3, name: '丸太小屋',         icon: '🏕️', phase: 'Phase 1: サバイバル期',   desc: '石の斧で木を切り倒して建てた小屋。ここから開拓が始まる！',              cost: { i1: 1, m1: 20, m2: 10 } },
+  { stage: 4, name: 'レンガの家',       icon: '🏠', phase: 'Phase 2: 開拓村期',       desc: 'レンガを積み上げた頑丈な家。Tier2レシピが全解放される！',               cost: { i7: 8, m8: 10 } },
+  { stage: 5, name: '鉄工所',           icon: '⚙️', phase: 'Phase 2: 開拓村期',       desc: '鉄のインゴットで作った工業施設。機械化の夜明け。',                       cost: { i6: 5, m4: 15 } },
+  { stage: 6, name: '蒸気工場',         icon: '🏭', phase: 'Phase 3: 産業革命期',     desc: '銅線と蒸気が動力を生む。Tier3レシピ解放！産業革命の幕開け！',           cost: { i11: 3, i12: 5 } },
+  { stage: 7, name: '研究施設',         icon: '🏛️', phase: 'Phase 3: 産業革命期',     desc: '魔法の薬と水晶で動く高度な研究拠点。謎が解き明かされる。',               cost: { i15: 2, m15: 10 } },
+  { stage: 8, name: 'メガロポリス',     icon: '🌆', phase: 'Phase 4: 現代都市期',     desc: '電球・プラスチック・ワールドコンパス。あなたは伝説の開拓者！',           cost: { i17: 2, i18: 3, i20: 1 } },
 ];
-const INITIAL_INVENTORY = { m1: 5, m2: 5, m3: 2, m4: 1, m5: 0, m6: 0, m7: 0, i1: 0, i2: 0, i3: 0, i4: 0, i5: 0, i6: 0, i7: 0 };
+const INITIAL_INVENTORY = {
+  m1: 5, m2: 5, m3: 2, m4: 0, m5: 0, m6: 0, m7: 0,
+  m8: 0, m9: 0, m10: 0, m11: 0, m12: 0, m13: 0, m14: 0, m15: 0,
+  m16: 0, m17: 0, m18: 0, m19: 0, m20: 0,
+  i1: 0, i2: 0, i3: 0, i4: 0, i5: 0, i6: 0, i7: 0, i8: 0, i9: 0, i10: 0,
+  i11: 0, i12: 0, i13: 0, i14: 0, i15: 0, i16: 0, i17: 0, i18: 0, i19: 0, i20: 0,
+};
 const SAVE_KEY = 'walkcraft_routes_v1';
 const MIN_MOVE_M = 10;
 
@@ -457,9 +501,10 @@ export default function App() {
     if (points < 50) return;
     setPoints(p => p - 50);
     const rand = Math.random() * 100;
-    const pool = rand < 60 ? Object.values(MATERIALS).filter(m => m.rarity === 1)
-      : rand < 90 ? Object.values(MATERIALS).filter(m => m.rarity === 2)
-        : Object.values(MATERIALS).filter(m => m.rarity >= 3);
+    const pool = rand < 55 ? Object.values(MATERIALS).filter(m => m.rarity === 1)
+      : rand < 85 ? Object.values(MATERIALS).filter(m => m.rarity === 2)
+      : rand < 97 ? Object.values(MATERIALS).filter(m => m.rarity === 3)
+      : Object.values(MATERIALS).filter(m => m.rarity === 4);
     const drop = pool[Math.floor(Math.random() * pool.length)];
     setInventory(prev => ({ ...prev, [drop.id]: (prev[drop.id] || 0) + 1 }));
     setGachaResult(drop);
@@ -594,12 +639,13 @@ export default function App() {
           <div className="text-7xl mb-3">{current?.icon ?? '🌿'}</div>
           <h3 className="text-lg font-black text-slate-800">{current?.name ?? '荒野'}</h3>
           <p className="text-sm text-slate-500 mt-1">{current?.desc ?? 'まだ何もない荒野。クラフトして建設しよう！'}</p>
-          <div className="mt-3 flex justify-center gap-1">
-            {[0, 1, 2, 3, 4].map(i => (
+          <div className="mt-3 flex justify-center gap-1 flex-wrap">
+            {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className={`w-4 h-2 rounded-full ${i < baseStage ? 'bg-amber-500' : 'bg-slate-200'}`} />
             ))}
           </div>
-          <p className="text-xs text-slate-400 mt-1">Lv {baseStage} / 4</p>
+          <p className="text-xs text-slate-400 mt-1">Lv {baseStage} / 8</p>
+          {current && <p className="text-[10px] text-amber-500 font-bold mt-1">{BASE_STAGES[baseStage - 1]?.phase}</p>}
         </div>
         {next ? (
           <div className="bg-white rounded-3xl p-5 shadow-sm border border-amber-200">
@@ -631,8 +677,9 @@ export default function App() {
         ) : (
           <div className="bg-amber-100 rounded-3xl p-6 text-center border border-amber-300">
             <p className="text-3xl mb-2">🏆</p>
-            <p className="font-black text-amber-800">すべての拠点を建設完了！</p>
+            <p className="font-black text-amber-800">メガロポリス完成！</p>
             <p className="text-sm text-amber-600 mt-1">あなたは伝説の開拓者です</p>
+            <p className="text-xs text-amber-500 mt-2">Phase 4: 現代都市期 — 達成！</p>
           </div>
         )}
       </div>
@@ -719,9 +766,10 @@ export default function App() {
             : <div className="text-6xl">🗺️</div>}
         </div>
         <div className="text-xs text-slate-400 mb-4 space-y-1">
-          <p>🟢 60% — Rarity 1（木の枝・石ころ）</p>
-          <p>🔵 30% — Rarity 2（きれいな水・鉄くず）</p>
-          <p>🟣 10% — Rarity 3-4（謎の草・火の粉・街の噂）</p>
+          <p>🟢 55% — Tier1（木の枝・石ころ・薬草・火打ち石 etc）</p>
+          <p>🔵 30% — Tier2（鉄鉱石・石炭・銅鉱石・ゴムの樹液 etc）</p>
+          <p>🟣 12% — Tier3（ハチミツ・原油・水晶・金鉱石）</p>
+          <p>⭐  3% — Tier4（街の噂・隕石の欠片）</p>
         </div>
         <button onClick={handleGacha} disabled={points < 50}
           className={`w-full py-4 rounded-xl font-black text-lg flex items-center justify-center gap-2 active:scale-95 transition-transform ${points >= 50 ? 'bg-yellow-400 text-yellow-900 shadow-md' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}>
