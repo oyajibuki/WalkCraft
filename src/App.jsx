@@ -384,6 +384,10 @@ const NEEDS_WORKBENCH = new Set([
 ]);
 // かまど(b2)が必要なレシピ（鉱石精錬系）
 const NEEDS_FURNACE = new Set(['i6','i7','i8','i11','i16']);
+// 醸造台(b6)が必要なレシピ（ポーション・特殊食料）
+const NEEDS_BREWERY = new Set(['i10','i15','f8','f10','f11','r8','r9']);
+// エンチャント台(b5)が必要なレシピ（最上位魔法・宝石系）
+const NEEDS_ENCHANT = new Set(['w4','w5','w6','w15','b12','p1','p4','p7']);
 
 // --- 重み付きドロッププール（拠点建設に必要な素材を優先） ---
 const getWeightedDropPool = (stageIdx) => {
@@ -571,6 +575,8 @@ export default function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [selectedMat1, setSelectedMat1] = useState(null);
   const [selectedMat2, setSelectedMat2] = useState(null);
+  const [selectedRecipe, setSelectedRecipe] = useState(null); // レシピブック詳細モーダル
+  const [craftCategory, setCraftCategory] = useState('all'); // カテゴリフィルター
   const [craftResult, setCraftResult] = useState(null);
   const [gachaResult, setGachaResult] = useState(null);
   const [levelUpMsg, setLevelUpMsg] = useState(null);
@@ -876,6 +882,46 @@ export default function App() {
     setSelectedMat1(null); setSelectedMat2(null);
   };
 
+  // --- レシピブック直接クラフト ---
+  const handleCraftRecipe = (recipe) => {
+    if (level < recipe.reqLevel) {
+      setCraftResult({ success: false, message: `Lv.${recipe.reqLevel} が必要です！` });
+      setTimeout(() => setCraftResult(null), 2500); return;
+    }
+    if (NEEDS_ENCHANT.has(recipe.id) && (inventory['b5'] || 0) === 0) {
+      setCraftResult({ success: false, message: '📖 エンチャント台 が必要！先に作ろう' });
+      setTimeout(() => setCraftResult(null), 3000); return;
+    }
+    if (NEEDS_BREWERY.has(recipe.id) && (inventory['b6'] || 0) === 0) {
+      setCraftResult({ success: false, message: '⚗️ 醸造台 が必要！先に作ろう（鉄ingot×鉄ingot）' });
+      setTimeout(() => setCraftResult(null), 3000); return;
+    }
+    if (NEEDS_FURNACE.has(recipe.id) && (inventory['b2'] || 0) === 0) {
+      setCraftResult({ success: false, message: '🔥 かまど が必要！先に作ろう（石ころ×石炭）' });
+      setTimeout(() => setCraftResult(null), 3000); return;
+    }
+    if (NEEDS_WORKBENCH.has(recipe.id) && (inventory['b1'] || 0) === 0) {
+      setCraftResult({ success: false, message: '🪚 作業台 が必要！先に作ろう（竹×綿花）' });
+      setTimeout(() => setCraftResult(null), 3000); return;
+    }
+    const [m1id, m2id] = recipe.materials;
+    const same = m1id === m2id;
+    if (same ? (inventory[m1id] || 0) < 2 : ((inventory[m1id] || 0) < 1 || (inventory[m2id] || 0) < 1)) {
+      setCraftResult({ success: false, message: '素材が足りません' });
+      setTimeout(() => setCraftResult(null), 2000); return;
+    }
+    setInventory(prev => ({
+      ...prev,
+      [m1id]: prev[m1id] - 1,
+      [m2id]: prev[m2id] - 1,
+      [recipe.id]: (prev[recipe.id] || 0) + 1,
+    }));
+    setExp(p => p + (collection.includes(recipe.id) ? 1 : 2));
+    if (!collection.includes(recipe.id)) setCollection(p => [...p, recipe.id]);
+    setCraftResult({ success: true, item: recipe });
+    setTimeout(() => { setCraftResult(null); setSelectedRecipe(null); }, 2000);
+  };
+
   // --- 交換: 承認（RPC経由で双方のインベントリを原子的に更新） ---
   const handleTradeAccept = async (drop) => {
     if (drop.isOwn) { showStatus('自分の交換条件は受けられません'); return; }
@@ -1123,26 +1169,37 @@ export default function App() {
         </div>
       </div>
       {showDropModal && (
-        <div className="absolute inset-0 bg-black/60 z-50 flex items-end justify-center pb-4 px-4" onClick={() => setShowDropModal(false)}>
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-sm p-5 shadow-2xl" onClick={e => e.stopPropagation()}>
-            <h3 className="font-bold text-lg mb-2 text-center text-white">アイテムをマップに置く</h3>
-            <p className="text-xs text-slate-400 text-center mb-4">現在地付近に設置。他の人が100m以内で拾えます。</p>
-            <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto mb-4">
+        <div className="absolute inset-0 bg-black/75 z-50 flex items-end" onClick={() => setShowDropModal(false)}>
+          <div className="bg-slate-800 border-t border-slate-600 rounded-t-3xl w-full p-5 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="w-10 h-1 bg-slate-600 rounded-full mx-auto mb-4" />
+            <h3 className="font-black text-xl mb-1 text-center text-white">アイテムをマップに置く</h3>
+            <p className="text-xs text-slate-400 text-center mb-4">現在地付近に設置。他の人が150m以内で拾えます。</p>
+            {itemToDrop && (
+              <div className="flex items-center gap-3 bg-slate-900 rounded-2xl px-4 py-3 mb-3 border border-amber-600/50">
+                <ItemIcon item={getItemData(itemToDrop)} size="md" />
+                <div>
+                  <span className="font-black text-white text-sm">{getItemData(itemToDrop)?.name}</span>
+                  <span className="block text-xs text-amber-400">選択中</span>
+                </div>
+              </div>
+            )}
+            <div className="grid grid-cols-4 gap-2.5 max-h-64 overflow-y-auto mb-4">
               {[...Object.values(MATERIALS), ...RECIPES].filter(i => (inventory[i.id] || 0) > 0).map(item => (
                 <div key={item.id} onClick={() => setItemToDrop(item.id)}
-                  className={`border-2 rounded-lg p-2 text-center cursor-pointer transition-all ${itemToDrop === item.id ? 'border-amber-400 bg-amber-900/30' : 'border-slate-600 bg-slate-900'}`}>
-                  <div className="flex justify-center"><ItemIcon item={item} size="md" /></div>
-                  <span className="text-[10px] block mt-1 text-slate-300">x{inventory[item.id]}</span>
+                  className={`border-2 rounded-xl p-2.5 text-center cursor-pointer transition-all active:scale-95 ${itemToDrop === item.id ? 'border-amber-400 bg-amber-900/30 shadow-md' : 'border-slate-600 bg-slate-900'}`}>
+                  <div className="flex justify-center mb-1"><ItemIcon item={item} size="md" /></div>
+                  <span className="text-[9px] font-bold block text-slate-300 truncate">{item.name}</span>
+                  <span className="text-[10px] font-black block text-slate-400">×{inventory[item.id]}</span>
                 </div>
               ))}
             </div>
-            <div className="flex gap-2">
-              <button onClick={() => setShowDropModal(false)}
-                className="flex-1 py-2 bg-slate-700 text-slate-300 rounded-xl font-bold border border-slate-600 active:scale-95">キャンセル</button>
+            <div className="flex gap-2.5">
+              <button onClick={() => { setShowDropModal(false); setItemToDrop(''); }}
+                className="flex-1 py-3.5 bg-slate-700 text-slate-300 rounded-2xl font-bold border border-slate-600 active:scale-95">キャンセル</button>
               <button onClick={handleDropItem} disabled={!itemToDrop}
-                className="flex-1 py-2 rounded-xl font-bold disabled:opacity-40 border-2 active:scale-95"
-                style={itemToDrop ? { background: 'linear-gradient(to bottom, #3b82f6, #2563eb)', borderColor: '#60a5fa', color: '#fff', boxShadow: '0 3px 0 #1d4ed8' } : { background: '#1e293b', borderColor: '#334155', color: '#475569' }}>
-                置く
+                className="flex-1 py-3.5 rounded-2xl font-black text-base disabled:opacity-40 border-2 active:scale-95 flex items-center justify-center gap-2"
+                style={itemToDrop ? { background: 'linear-gradient(to bottom, #3b82f6, #2563eb)', borderColor: '#60a5fa', color: '#fff', boxShadow: '0 4px 0 #1d4ed8' } : { background: '#1e293b', borderColor: '#334155', color: '#475569' }}>
+                <ArrowDownCircle className="w-5 h-5" /> 置く
               </button>
             </div>
           </div>
@@ -1170,12 +1227,6 @@ export default function App() {
                 </div>
               : <div className="text-5xl opacity-20">🗺️</div>}
           </div>
-          <div className="text-xs space-y-1.5 mb-5 text-left">
-            <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-green-400 shrink-0" /><span className="text-slate-400">55% — Tier1  木の枝・石ころ・薬草 etc</span></div>
-            <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" /><span className="text-slate-400">30% — Tier2  鉄鉱石・石炭・銅鉱石 etc</span></div>
-            <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-purple-400 shrink-0" /><span className="text-slate-400">12% — Tier3  ハチミツ・水晶・金鉱石</span></div>
-            <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" /><span className="text-slate-400"> 3% — Tier4  隕石の欠片・街の噂</span></div>
-          </div>
           <button onClick={handleGacha} disabled={points < 80}
             className="w-full py-4 rounded-xl font-black text-lg flex items-center justify-center gap-2 transition-all border-2 disabled:opacity-40 disabled:cursor-not-allowed"
             style={points >= 80 ? {
@@ -1192,83 +1243,197 @@ export default function App() {
     </div>
   );
 
-  // --- レンダー: クラフト ---
-  const renderCraft = () => (
-    <div className="flex flex-col h-full" style={{ background: '#0a0f1e' }}>
-      {/* ヘッダー */}
-      <div className="px-4 pt-4 pb-3 bg-slate-900 border-b border-slate-800 shrink-0">
-        <div className="flex justify-between items-center mb-2">
-          <h2 className="text-xl font-black text-orange-400 flex items-center gap-2">
-            <Hammer className="w-5 h-5" /> クラフト
-          </h2>
-          <span className="text-sm font-black text-amber-400 bg-slate-800 px-3 py-1 rounded-full border border-slate-700">Lv.{level}</span>
+  // --- レンダー: クラフト（レシピブック方式） ---
+  const renderCraft = () => {
+    const CATS = [
+      { key: 'all', label: '全て', icon: '🗂️' },
+      { key: 'r', label: '素材', icon: '⚙️' },
+      { key: 'i', label: 'アイテム', icon: '🧪' },
+      { key: 'f', label: '食料', icon: '🍖' },
+      { key: 'w', label: '武器', icon: '⚔️' },
+      { key: 'b', label: '建築', icon: '🏗️' },
+      { key: 'p', label: '上級', icon: '⭐' },
+    ];
+    const STATIONS = [
+      { id: 'b1', name: '作業台', icon: '🪚', active: 'bg-amber-900/40 border-amber-600 text-amber-300' },
+      { id: 'b2', name: 'かまど', icon: '🔥', active: 'bg-red-900/40 border-red-700 text-red-300' },
+      { id: 'b6', name: '醸造台', icon: '⚗️', active: 'bg-purple-900/40 border-purple-700 text-purple-300' },
+      { id: 'b5', name: 'エンチャント台', icon: '📖', active: 'bg-blue-900/40 border-blue-700 text-blue-300' },
+    ];
+    const filtered = craftCategory === 'all'
+      ? RECIPES
+      : craftCategory === 'p'
+        ? RECIPES.filter(r => r.id.startsWith('p') || r.id.startsWith('l'))
+        : RECIPES.filter(r => r.id.startsWith(craftCategory));
+
+    const canCraftRecipe = (recipe) => {
+      if (level < recipe.reqLevel) return false;
+      if (NEEDS_ENCHANT.has(recipe.id) && (inventory['b5'] || 0) === 0) return false;
+      if (NEEDS_BREWERY.has(recipe.id) && (inventory['b6'] || 0) === 0) return false;
+      if (NEEDS_FURNACE.has(recipe.id) && (inventory['b2'] || 0) === 0) return false;
+      if (NEEDS_WORKBENCH.has(recipe.id) && (inventory['b1'] || 0) === 0) return false;
+      const [m1id, m2id] = recipe.materials;
+      if (m1id === m2id) return (inventory[m1id] || 0) >= 2;
+      return (inventory[m1id] || 0) >= 1 && (inventory[m2id] || 0) >= 1;
+    };
+    const getStation = (recipe) => {
+      if (NEEDS_ENCHANT.has(recipe.id)) return STATIONS[3];
+      if (NEEDS_BREWERY.has(recipe.id)) return STATIONS[2];
+      if (NEEDS_FURNACE.has(recipe.id)) return STATIONS[1];
+      if (NEEDS_WORKBENCH.has(recipe.id)) return STATIONS[0];
+      return null;
+    };
+
+    return (
+      <div className="flex flex-col h-full relative" style={{ background: '#0a0f1e' }}>
+        {/* ヘッダー */}
+        <div className="px-4 pt-4 pb-2 bg-slate-900 border-b border-slate-800 shrink-0">
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-xl font-black text-orange-400 flex items-center gap-2">
+              <Hammer className="w-5 h-5" /> クラフト
+            </h2>
+            <span className="text-sm font-black text-amber-400 bg-slate-800 px-3 py-1 rounded-full border border-slate-700">Lv.{level}</span>
+          </div>
+          <div className="flex justify-between text-xs text-slate-500 font-bold mb-1"><span>EXP</span><span>{exp}/{xpMax}</span></div>
+          <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden border border-slate-700 mb-2">
+            <div className="h-full bg-gradient-to-r from-orange-500 to-amber-400 rounded-full transition-all duration-500" style={{ width: `${xpPct}%` }} />
+          </div>
+          {/* 設備バッジ */}
+          <div className="flex gap-1.5 flex-wrap">
+            {STATIONS.map(s => {
+              const have = (inventory[s.id] || 0) > 0;
+              return (
+                <span key={s.id} className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${have ? s.active : 'bg-slate-800 border-slate-700 text-slate-500'}`}>
+                  {s.icon} {s.name} {have ? '✅' : '❌'}
+                </span>
+              );
+            })}
+          </div>
         </div>
-        <div className="flex justify-between text-xs text-slate-500 font-bold mb-1"><span>EXP</span><span>{exp}/{xpMax}</span></div>
-        <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
-          <div className="h-full bg-gradient-to-r from-orange-500 to-amber-400 rounded-full transition-all duration-500" style={{ width: `${xpPct}%` }} />
-        </div>
-      </div>
-      {/* 所持設備バッジ */}
-      <div className="px-4 pt-2 shrink-0 flex gap-2 flex-wrap">
-        <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${(inventory['b1']||0) > 0 ? 'bg-amber-900/40 border-amber-600 text-amber-300' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>🪚 作業台 {(inventory['b1']||0) > 0 ? '✅' : '❌'}</span>
-        <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${(inventory['b2']||0) > 0 ? 'bg-red-900/40 border-red-700 text-red-300' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>🔥 かまど {(inventory['b2']||0) > 0 ? '✅' : '❌'}</span>
-      </div>
-      {/* クラフトスロット */}
-      <div className="px-4 pt-3 shrink-0">
-        <div className="bg-slate-800 border border-slate-700 p-5 rounded-2xl flex items-center justify-between mb-3">
-          {[selectedMat1, selectedMat2].map((mat, i) => (
-            <React.Fragment key={i}>
-              {i === 1 && <span className="text-slate-500 font-black text-2xl">+</span>}
-              <div className="w-20 h-20 bg-slate-900 rounded-xl flex items-center justify-center border-2 border-dashed border-slate-600">
-                {mat ? <div className="cursor-pointer flex items-center justify-center" onClick={() => i === 0 ? setSelectedMat1(null) : setSelectedMat2(null)}><ItemIcon item={getItemData(mat)} size="lg" /></div>
-                  : <span className="text-slate-600 text-xs font-bold">素材{i + 1}</span>}
-              </div>
-            </React.Fragment>
+
+        {/* カテゴリタブ */}
+        <div className="flex gap-1.5 px-3 pt-2 pb-1.5 overflow-x-auto shrink-0 scrollbar-hide">
+          {CATS.map(cat => (
+            <button key={cat.key} onClick={() => setCraftCategory(cat.key)}
+              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-black border transition-all active:scale-95 ${
+                craftCategory === cat.key
+                  ? 'bg-orange-500 border-orange-400 text-white shadow-md'
+                  : 'bg-slate-800 border-slate-700 text-slate-400'
+              }`}>
+              {cat.icon} {cat.label}
+            </button>
           ))}
         </div>
-        <button onClick={handleCraft} disabled={!selectedMat1 || !selectedMat2}
-          className="w-full py-4 rounded-xl font-black text-lg mb-3 flex justify-center items-center gap-2 transition-all border-2 disabled:opacity-40"
-          style={selectedMat1 && selectedMat2 ? {
-            background: 'linear-gradient(to bottom, #f97316, #c2410c)',
-            borderColor: '#fb923c', color: '#fff',
-            boxShadow: '0 4px 0 #7c2d12'
-          } : { background: '#1e293b', borderColor: '#334155', color: '#475569' }}>
-          <Hammer className="w-6 h-6" /> 組み合わせる
-        </button>
-        {craftResult && (
-          <div className={`p-3 rounded-xl mb-3 text-center font-bold ${craftResult.success ? 'bg-green-900/40 text-green-400 border border-green-700' : 'bg-red-900/30 text-red-400 border border-red-900'}`}>
-            {craftResult.success ? <><Sparkles className="inline-block mr-1 w-4 h-4" />【{craftResult.item.name}】が完成！</>
-              : <><AlertCircle className="inline-block mr-1 w-4 h-4" />{craftResult.message}</>}
-          </div>
-        )}
-      </div>
-      {/* インベントリ */}
-      <div className="px-4 pb-1 pt-1 shrink-0">
-        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">インベントリ</h3>
-      </div>
-      <div className="grid grid-cols-3 gap-2 overflow-y-auto px-4 pb-4">
-        {[...Object.values(MATERIALS), ...RECIPES].map(item => {
-          const count = inventory[item.id] || 0;
-          if (count === 0 && selectedMat1 !== item.id && selectedMat2 !== item.id) return null;
-          const isSelected = selectedMat1 === item.id || selectedMat2 === item.id;
-          return (
-            <div key={item.id} className={`rounded-xl border p-2 flex flex-col items-center transition-all ${isSelected ? 'bg-orange-900/40 border-orange-600' : 'bg-slate-800 border-slate-700'}`}>
-              <div onClick={() => count > 0 && toggleMaterial(item.id)}
-                className={`w-full p-2 text-center rounded-lg transition-all ${count > 0 ? 'cursor-pointer active:scale-95' : ''}`}>
-                <div className="flex justify-center mb-1"><ItemIcon item={item} size="md" /></div>
-                <span className="block text-[10px] font-black text-slate-300 truncate">{item.name}</span>
-                <span className="block text-xs font-bold text-slate-500">x{count}</span>
+
+        {/* レシピグリッド */}
+        <div className="grid grid-cols-3 gap-2 overflow-y-auto px-3 pb-4 pt-1">
+          {filtered.map(recipe => {
+            const craftable = canCraftRecipe(recipe);
+            const station = getStation(recipe);
+            return (
+              <div key={recipe.id} onClick={() => setSelectedRecipe(recipe)}
+                className={`rounded-xl border p-2 flex flex-col items-center cursor-pointer active:scale-95 transition-all ${
+                  craftable
+                    ? 'bg-slate-800 border-orange-600/70 shadow-md shadow-orange-900/20'
+                    : 'bg-slate-900/60 border-slate-800 opacity-50'
+                }`}>
+                <div className="flex justify-center mb-1 mt-1">
+                  <ItemIcon item={recipe} size="md" />
+                </div>
+                <span className="text-[10px] font-black text-slate-300 text-center leading-tight line-clamp-2">{recipe.name}</span>
+                <div className="flex items-center gap-1 mt-1">
+                  {station && <span className="text-[9px]">{station.icon}</span>}
+                  <span className="text-[9px] text-slate-500 font-bold">Lv{recipe.reqLevel}</span>
+                </div>
               </div>
-              <button onClick={() => handleSell(item.id)} disabled={count === 0}
-                className="mt-1 w-full flex items-center justify-center gap-1 text-[10px] font-bold bg-slate-700 text-slate-400 py-1 rounded disabled:opacity-30 active:scale-95">
-                <Coins className="w-3 h-3 text-amber-500" />{item.price}で売る
-              </button>
+            );
+          })}
+        </div>
+
+        {/* レシピ詳細モーダル */}
+        {selectedRecipe && (() => {
+          const recipe = selectedRecipe;
+          const craftable = canCraftRecipe(recipe);
+          const station = getStation(recipe);
+          const [m1id, m2id] = recipe.materials;
+          const m1item = getItemById(m1id);
+          const m2item = getItemById(m2id);
+          const same = m1id === m2id;
+          const haveM1 = inventory[m1id] || 0;
+          const haveM2 = inventory[m2id] || 0;
+          const matList = same
+            ? [{ item: m1item, have: haveM1, need: 2 }]
+            : [{ item: m1item, have: haveM1, need: 1 }, { item: m2item, have: haveM2, need: 1 }];
+          return (
+            <div className="absolute inset-0 bg-black/70 z-50 flex items-end" onClick={() => setSelectedRecipe(null)}>
+              <div className="bg-slate-800 border-t border-slate-600 rounded-t-3xl w-full p-5 shadow-2xl max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                {/* ドラッグハンドル */}
+                <div className="w-10 h-1 bg-slate-600 rounded-full mx-auto mb-4" />
+                {/* タイトル */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center border border-slate-700 shrink-0">
+                    <ItemIcon item={recipe} size="lg" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-black text-white text-lg leading-tight">{recipe.name}</h3>
+                    <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{recipe.desc}</p>
+                  </div>
+                  <span className="text-xs font-black text-amber-400 bg-slate-900 px-2 py-1 rounded-full border border-slate-700 shrink-0">Lv{recipe.reqLevel}</span>
+                </div>
+                {/* 必要設備 */}
+                {station && (
+                  <div className={`flex items-center gap-2 px-3 py-2.5 rounded-xl mb-3 border font-bold ${(inventory[station.id]||0) > 0 ? 'bg-green-900/20 border-green-700 text-green-300' : 'bg-red-900/20 border-red-800 text-red-300'}`}>
+                    <span className="text-lg">{station.icon}</span>
+                    <span className="text-sm">{station.name} が必要</span>
+                    <span className="ml-auto text-sm">{(inventory[station.id]||0) > 0 ? '✅ 所持中' : '❌ 未所持'}</span>
+                  </div>
+                )}
+                {/* 必要素材 */}
+                <p className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">必要素材</p>
+                <div className="flex gap-2 mb-4">
+                  {matList.map(({ item, have, need }, i) => (
+                    <div key={i} className={`flex-1 flex items-center gap-3 px-3 py-3 rounded-2xl border ${have >= need ? 'bg-green-900/20 border-green-700' : 'bg-red-900/20 border-red-800'}`}>
+                      <ItemIcon item={item} size="md" />
+                      <div>
+                        <span className="block text-xs font-black text-white">{item?.name}</span>
+                        <span className={`text-base font-black ${have >= need ? 'text-green-400' : 'text-red-400'}`}>
+                          {have}/{need} {have >= need ? '✅' : '❌'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {/* クラフト結果通知 */}
+                {craftResult && (
+                  <div className={`p-3 rounded-xl mb-3 text-center font-bold ${craftResult.success ? 'bg-green-900/40 text-green-400 border border-green-700' : 'bg-red-900/30 text-red-400 border border-red-900'}`}>
+                    {craftResult.success
+                      ? <><Sparkles className="inline-block mr-1 w-4 h-4" />【{craftResult.item.name}】が完成！</>
+                      : <><AlertCircle className="inline-block mr-1 w-4 h-4" />{craftResult.message}</>}
+                  </div>
+                )}
+                {/* ボタン */}
+                <div className="flex gap-2">
+                  <button onClick={() => setSelectedRecipe(null)}
+                    className="flex-1 py-3.5 bg-slate-700 text-slate-300 rounded-2xl font-bold border border-slate-600 active:scale-95">
+                    閉じる
+                  </button>
+                  <button onClick={() => handleCraftRecipe(recipe)} disabled={!craftable}
+                    className="flex-1 py-3.5 rounded-2xl font-black text-base flex justify-center items-center gap-2 border-2 disabled:opacity-40 active:scale-95 transition-all"
+                    style={craftable ? {
+                      background: 'linear-gradient(to bottom, #f97316, #c2410c)',
+                      borderColor: '#fb923c', color: '#fff',
+                      boxShadow: '0 4px 0 #7c2d12'
+                    } : { background: '#1e293b', borderColor: '#334155', color: '#475569' }}>
+                    <Hammer className="w-5 h-5" /> クラフト
+                  </button>
+                </div>
+              </div>
             </div>
           );
-        })}
+        })()}
       </div>
-    </div>
-  );
+    );
+  };
 
   // --- レンダー: 交換（旧GeoDrop） ---
   const renderExchange = () => (
