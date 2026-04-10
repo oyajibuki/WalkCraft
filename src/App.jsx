@@ -1183,13 +1183,13 @@ export default function App() {
                 </div>
               </div>
             )}
-            <div className="grid grid-cols-4 gap-2.5 max-h-64 overflow-y-auto mb-4">
+            <div className="grid grid-cols-3 gap-3 max-h-72 overflow-y-auto mb-4">
               {[...Object.values(MATERIALS), ...RECIPES].filter(i => (inventory[i.id] || 0) > 0).map(item => (
                 <div key={item.id} onClick={() => setItemToDrop(item.id)}
-                  className={`border-2 rounded-xl p-2.5 text-center cursor-pointer transition-all active:scale-95 ${itemToDrop === item.id ? 'border-amber-400 bg-amber-900/30 shadow-md' : 'border-slate-600 bg-slate-900'}`}>
-                  <div className="flex justify-center mb-1"><ItemIcon item={item} size="md" /></div>
-                  <span className="text-[9px] font-bold block text-slate-300 truncate">{item.name}</span>
-                  <span className="text-[10px] font-black block text-slate-400">×{inventory[item.id]}</span>
+                  className={`border-2 rounded-xl p-3 text-center cursor-pointer transition-all active:scale-95 ${itemToDrop === item.id ? 'border-amber-400 bg-amber-900/30 shadow-md' : 'border-slate-600 bg-slate-900'}`}>
+                  <div className="flex justify-center mb-1.5"><ItemIcon item={item} size="md" /></div>
+                  <span className="text-xs font-bold block text-slate-300 leading-tight">{item.name}</span>
+                  <span className="text-sm font-black block text-slate-300 mt-0.5">×{inventory[item.id]}</span>
                 </div>
               ))}
             </div>
@@ -1246,7 +1246,8 @@ export default function App() {
   // --- レンダー: クラフト（レシピブック方式） ---
   const renderCraft = () => {
     const CATS = [
-      { key: 'all', label: '全て', icon: '🗂️' },
+      { key: 'inv', label: '所持品', icon: '🎒' },
+      { key: 'all', label: '全レシピ', icon: '🗂️' },
       { key: 'r', label: '素材', icon: '⚙️' },
       { key: 'i', label: 'アイテム', icon: '🧪' },
       { key: 'f', label: '食料', icon: '🍖' },
@@ -1260,11 +1261,14 @@ export default function App() {
       { id: 'b6', name: '醸造台', icon: '⚗️', active: 'bg-purple-900/40 border-purple-700 text-purple-300' },
       { id: 'b5', name: 'エンチャント台', icon: '📖', active: 'bg-blue-900/40 border-blue-700 text-blue-300' },
     ];
-    const filtered = craftCategory === 'all'
-      ? RECIPES
-      : craftCategory === 'p'
-        ? RECIPES.filter(r => r.id.startsWith('p') || r.id.startsWith('l'))
-        : RECIPES.filter(r => r.id.startsWith(craftCategory));
+    const ownedItems = [...Object.values(MATERIALS), ...RECIPES].filter(i => (inventory[i.id] || 0) > 0);
+    const filtered = craftCategory === 'inv'
+      ? null // インベントリ表示モード
+      : craftCategory === 'all'
+        ? RECIPES
+        : craftCategory === 'p'
+          ? RECIPES.filter(r => r.id.startsWith('p') || r.id.startsWith('l'))
+          : RECIPES.filter(r => r.id.startsWith(craftCategory));
 
     const canCraftRecipe = (recipe) => {
       if (level < recipe.reqLevel) return false;
@@ -1325,30 +1329,55 @@ export default function App() {
           ))}
         </div>
 
-        {/* レシピグリッド */}
-        <div className="grid grid-cols-3 gap-2 overflow-y-auto px-3 pb-4 pt-1">
-          {filtered.map(recipe => {
-            const craftable = canCraftRecipe(recipe);
-            const station = getStation(recipe);
-            return (
-              <div key={recipe.id} onClick={() => setSelectedRecipe(recipe)}
-                className={`rounded-xl border p-2 flex flex-col items-center cursor-pointer active:scale-95 transition-all ${
-                  craftable
-                    ? 'bg-slate-800 border-orange-600/70 shadow-md shadow-orange-900/20'
-                    : 'bg-slate-900/60 border-slate-800 opacity-50'
-                }`}>
-                <div className="flex justify-center mb-1 mt-1">
-                  <ItemIcon item={recipe} size="md" />
-                </div>
-                <span className="text-[10px] font-black text-slate-300 text-center leading-tight line-clamp-2">{recipe.name}</span>
-                <div className="flex items-center gap-1 mt-1">
-                  {station && <span className="text-[9px]">{station.icon}</span>}
-                  <span className="text-[9px] text-slate-500 font-bold">Lv{recipe.reqLevel}</span>
-                </div>
+        {/* 所持品グリッド or レシピグリッド */}
+        {craftCategory === 'inv' ? (
+          <div className="overflow-y-auto px-3 pb-4 pt-1">
+            {ownedItems.length === 0 ? (
+              <p className="text-center text-slate-500 text-sm py-12 font-bold">まだ素材がありません。<br/>歩いて集めよう！</p>
+            ) : (
+              <div className="grid grid-cols-3 gap-2">
+                {ownedItems.map(item => {
+                  const count = inventory[item.id] || 0;
+                  return (
+                    <div key={item.id} className="bg-slate-800 border border-slate-700 rounded-xl p-3 flex flex-col items-center">
+                      <div className="flex justify-center mb-1.5"><ItemIcon item={item} size="md" /></div>
+                      <span className="text-[10px] font-black text-slate-300 text-center leading-tight">{item.name}</span>
+                      <span className="text-base font-black text-white mt-1">×{count}</span>
+                      <button onClick={() => handleSell(item.id)} disabled={count === 0}
+                        className="mt-2 w-full flex items-center justify-center gap-1 text-[10px] font-bold bg-slate-700 text-amber-400 py-1.5 rounded-lg disabled:opacity-30 active:scale-95 border border-slate-600">
+                        <Coins className="w-3 h-3" />{item.price}pt
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-2 overflow-y-auto px-3 pb-4 pt-1">
+            {filtered.map(recipe => {
+              const craftable = canCraftRecipe(recipe);
+              const station = getStation(recipe);
+              return (
+                <div key={recipe.id} onClick={() => setSelectedRecipe(recipe)}
+                  className={`rounded-xl border p-2 flex flex-col items-center cursor-pointer active:scale-95 transition-all ${
+                    craftable
+                      ? 'bg-slate-800 border-orange-600/70 shadow-md shadow-orange-900/20'
+                      : 'bg-slate-900/60 border-slate-800 opacity-50'
+                  }`}>
+                  <div className="flex justify-center mb-1 mt-1">
+                    <ItemIcon item={recipe} size="md" />
+                  </div>
+                  <span className="text-[10px] font-black text-slate-300 text-center leading-tight line-clamp-2">{recipe.name}</span>
+                  <div className="flex items-center gap-1 mt-1">
+                    {station && <span className="text-[9px]">{station.icon}</span>}
+                    <span className="text-[9px] text-slate-500 font-bold">Lv{recipe.reqLevel}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* レシピ詳細モーダル */}
         {selectedRecipe && (() => {
