@@ -81,8 +81,8 @@ const waypointIcon = L.divIcon({
   className: '', iconSize: [8, 8], iconAnchor: [4, 4],
 });
 const exchangeIcon = L.divIcon({
-  html: '<div style="font-size:22px;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.7));line-height:1">🔄</div>',
-  className: '', iconSize: [28, 28], iconAnchor: [14, 14],
+  html: `<div style="width:34px;height:34px;background:linear-gradient(135deg,#7c3aed,#4f46e5);border:2px solid #a78bfa;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 3px 8px rgba(0,0,0,0.7),0 0 0 1px rgba(167,139,250,0.4);filter:drop-shadow(0 2px 6px rgba(0,0,0,0.8))">⚔️</div>`,
+  className: '', iconSize: [34, 34], iconAnchor: [17, 17],
 });
 
 const getItemById = (id) => MATERIALS[id] || RECIPES.find(r => r.id === id);
@@ -371,6 +371,34 @@ const INITIAL_INVENTORY = {
 const SAVE_KEY = 'walkcraft_routes_v1';
 const MIN_MOVE_M = 10;
 
+// ── クラフト設備チェック（マインクラフト方式） ──
+// 作業台(b1)が必要なレシピ（b1自体と基礎レシピは不要）
+const NEEDS_WORKBENCH = new Set([
+  'i6','i7','i8','i9','i10','i11','i12','i13','i14','i15','i16','i17','i18','i19','i20',
+  'r3','r5','r6','r7','r8','r9','r10','r11','r12',
+  'f4','f5','f6','f7','f8','f10','f11','f12','f14',
+  'w3','w4','w5','w6','w7','w9','w10','w11','w12','w13','w14','w15',
+  'b3','b4','b5','b6','b7','b8','b9','b10','b11','b12',
+  'p1','p2','p3','p4','p5','p6','p7','p8',
+  'lr1','lr2','lr3','lr4','lr5','lr6','lr7','lr8',
+]);
+// かまど(b2)が必要なレシピ（鉱石精錬系）
+const NEEDS_FURNACE = new Set(['i6','i7','i8','i11','i16']);
+
+// --- 重み付きドロッププール（拠点建設に必要な素材を優先） ---
+const getWeightedDropPool = (stageIdx) => {
+  const urgent = {};
+  for (let i = stageIdx; i < Math.min(stageIdx + 2, BASE_STAGES.length); i++) {
+    Object.keys(BASE_STAGES[i].cost).forEach(id => { urgent[id] = true; });
+  }
+  const pool = [];
+  Object.values(MATERIALS).filter(m => m.rarity <= 2).forEach(m => {
+    const w = urgent[m.id] ? 6 : m.rarity === 1 ? 2 : 1;
+    for (let i = 0; i < w; i++) pool.push(m);
+  });
+  return pool;
+};
+
 // --- GPS ---
 const haversineM = (lat1, lon1, lat2, lon2) => {
   const R = 6371000;
@@ -555,6 +583,10 @@ export default function App() {
   const [tradeOffer, setTradeOffer] = useState('');
   const [tradeRequest, setTradeRequest] = useState('');
   const [tradeMessage, setTradeMessage] = useState('');
+  // 1日1回の交換制限
+  const [lastTradeDate, setLastTradeDate] = useState(() => localStorage.getItem('wc_lastTrade') ?? '');
+  const todayStr = new Date().toLocaleDateString('ja-JP');
+  const tradedToday = lastTradeDate === todayStr;
 
   const saveTimerRef = useRef(null);
   const authUserRef = useRef(null);
@@ -715,20 +747,24 @@ export default function App() {
     const newWaypoints = [...waypoints, { ...currentPos, timestamp: Date.now() }];
     setWaypoints(newWaypoints);
     const walked = lastWp ? Math.round(moved) : 0;
-    if (walked > 0) { setDistance(p => p + walked); setPoints(p => p + Math.floor(walked / 2)); }
+    // ポイント: 8mで1pt（1km歩いて125pt ≈ ガチャ1.5回）
+    if (walked > 0) { setDistance(p => p + walked); setPoints(p => p + Math.floor(walked / 8)); }
     if (lastWp) { const seg = await fetchOSRMRoute(lastWp, currentPos); setRouteSegments(p => [...p, seg]); }
 
-    if (Math.random() < 0.3) {
-      const pool = Object.values(MATERIALS).filter(m => m.rarity <= 2);
+    // 素材を散りばめる: 2〜4個、プレイヤーLvで最大数UP、拠点に必要な素材優先
+    const dropCount = Math.min(4, 2 + Math.floor(level / 3));
+    const pool = getWeightedDropPool(baseStage);
+    const offset = () => (Math.random() - 0.5) * 0.0012;
+    const newDrops = [];
+    for (let i = 0; i < dropCount; i++) {
       const mat = pool[Math.floor(Math.random() * pool.length)];
-      const offset = () => (Math.random() - 0.5) * 0.0006;
       const lat = currentPos.lat + offset(), lon = currentPos.lon + offset();
       const { data } = await supabase.from('geo_drops').insert({ user_id: authUser.id, material_id: mat.id, lat, lon }).select().single();
-      if (data) setGpsDrops(p => [...p, { uid: data.id, materialId: data.material_id, lat: data.lat, lon: data.lon }]);
-      showStatus(`✨ ${mat.icon} ${mat.name} が周辺に出現！`);
-    } else {
-      showStatus(walked > 0 ? `✅ ${walked}m 記録しました！` : '📌 スタート地点を記録しました');
+      if (data) newDrops.push({ uid: data.id, materialId: data.material_id, lat: data.lat, lon: data.lon });
     }
+    if (newDrops.length > 0) setGpsDrops(p => [...p, ...newDrops]);
+    const names = [...new Set(newDrops.map(d => MATERIALS[d.materialId]?.name ?? ''))].join('・');
+    showStatus(walked > 0 ? `✨ ${dropCount}個の素材が周辺に出現！（${names}）` : `📌 スタート地点を記録。素材が出現！`);
     setRecenterTrigger(t => t + 1);
     setIsRecording(false);
   };
@@ -736,8 +772,8 @@ export default function App() {
   // --- 拾う ---
   const handlePickLocalDrops = async () => {
     if (!currentPos) { showStatus('📡 GPS取得中...'); return; }
-    const nearby = gpsDrops.filter(d => haversineM(currentPos.lat, currentPos.lon, d.lat, d.lon) <= 100);
-    if (!nearby.length) { showStatus('🔍 半径100m以内に拾えるものはありません'); return; }
+    const nearby = gpsDrops.filter(d => haversineM(currentPos.lat, currentPos.lon, d.lat, d.lon) <= 150);
+    if (!nearby.length) { showStatus('🔍 半径150m以内に落とし物はありません'); return; }
     const ids = nearby.map(d => d.uid);
     await supabase.from('geo_drops').delete().in('id', ids);
     setInventory(prev => {
@@ -771,13 +807,21 @@ export default function App() {
 
   // --- ガチャ ---
   const handleGacha = () => {
-    if (points < 50) return;
-    setPoints(p => p - 50);
+    if (points < 80) return;
+    setPoints(p => p - 80);
     const rand = Math.random() * 100;
-    const pool = rand < 55 ? Object.values(MATERIALS).filter(m => m.rarity === 1)
-      : rand < 85 ? Object.values(MATERIALS).filter(m => m.rarity === 2)
-      : rand < 97 ? Object.values(MATERIALS).filter(m => m.rarity === 3)
-      : Object.values(MATERIALS).filter(m => m.rarity === 4);
+    let pool;
+    if (rand < 55) {
+      // Tier1: 拠点に必要な素材を優先
+      const urgentPool = getWeightedDropPool(baseStage).filter(m => m.rarity === 1);
+      pool = urgentPool.length > 0 ? urgentPool : Object.values(MATERIALS).filter(m => m.rarity === 1);
+    } else if (rand < 85) {
+      pool = Object.values(MATERIALS).filter(m => m.rarity === 2);
+    } else if (rand < 97) {
+      pool = Object.values(MATERIALS).filter(m => m.rarity === 3);
+    } else {
+      pool = Object.values(MATERIALS).filter(m => m.rarity === 4);
+    }
     const drop = pool[Math.floor(Math.random() * pool.length)];
     setInventory(prev => ({ ...prev, [drop.id]: (prev[drop.id] || 0) + 1 }));
     setGachaResult(drop);
@@ -798,20 +842,36 @@ export default function App() {
       r.materials.includes(selectedMat1) && r.materials.includes(selectedMat2) &&
       (selectedMat1 !== selectedMat2 || r.materials[0] === r.materials[1])
     );
-    if (recipe && level < recipe.reqLevel) {
-      setCraftResult({ success: false, message: `Lv.${recipe.reqLevel} が必要です！` });
-    } else if (recipe) {
-      setInventory(prev => ({
-        ...prev, [selectedMat1]: prev[selectedMat1] - 1,
-        [selectedMat2]: prev[selectedMat2] - 1,
-        [recipe.id]: (prev[recipe.id] || 0) + 1,
-      }));
-      setExp(p => p + (collection.includes(recipe.id) ? 1 : 2));
-      if (!collection.includes(recipe.id)) setCollection(p => [...p, recipe.id]);
-      setCraftResult({ success: true, item: recipe });
-    } else {
+    if (!recipe) {
       setCraftResult({ success: false, message: 'この組み合わせでは何も作れない...' });
+      setTimeout(() => setCraftResult(null), 2500);
+      setSelectedMat1(null); setSelectedMat2(null);
+      return;
     }
+    if (level < recipe.reqLevel) {
+      setCraftResult({ success: false, message: `Lv.${recipe.reqLevel} が必要です！` });
+      setTimeout(() => setCraftResult(null), 2500);
+      return;
+    }
+    // クラフト設備チェック（マインクラフト方式）
+    if (NEEDS_FURNACE.has(recipe.id) && (inventory['b2'] || 0) === 0) {
+      setCraftResult({ success: false, message: '🔥 かまど が必要！先にかまど(石ころ×1+石炭×1)を作ろう' });
+      setTimeout(() => setCraftResult(null), 3000);
+      return;
+    }
+    if (NEEDS_WORKBENCH.has(recipe.id) && (inventory['b1'] || 0) === 0) {
+      setCraftResult({ success: false, message: '🪚 作業台 が必要！先に作業台(竹×1+綿花×1)を作ろう' });
+      setTimeout(() => setCraftResult(null), 3000);
+      return;
+    }
+    setInventory(prev => ({
+      ...prev, [selectedMat1]: prev[selectedMat1] - 1,
+      [selectedMat2]: prev[selectedMat2] - 1,
+      [recipe.id]: (prev[recipe.id] || 0) + 1,
+    }));
+    setExp(p => p + (collection.includes(recipe.id) ? 1 : 2));
+    if (!collection.includes(recipe.id)) setCollection(p => [...p, recipe.id]);
+    setCraftResult({ success: true, item: recipe });
     setTimeout(() => setCraftResult(null), 2500);
     setSelectedMat1(null); setSelectedMat2(null);
   };
@@ -819,6 +879,7 @@ export default function App() {
   // --- 交換: 承認（RPC経由で双方のインベントリを原子的に更新） ---
   const handleTradeAccept = async (drop) => {
     if (drop.isOwn) { showStatus('自分の交換条件は受けられません'); return; }
+    if (tradedToday) { showStatus('⏰ 今日の交換は済みです。また明日！'); return; }
     if ((inventory[drop.requesting] || 0) < 1) {
       showStatus(`❌ ${getItemData(drop.requesting)?.name} が足りません`); return;
     }
@@ -840,6 +901,8 @@ export default function App() {
     setTradeMarkers(p => p.filter(t => t.id !== drop.id));
     const icon = getItemData(drop.offering)?.icon ?? '';
     const name = getItemData(drop.offering)?.name ?? '';
+    localStorage.setItem('wc_lastTrade', todayStr);
+    setLastTradeDate(todayStr);
     showStatus(`✅ ${data.placer_name} と交換成立！ ${icon} ${name} を受け取った`);
   };
 
@@ -1049,7 +1112,7 @@ export default function App() {
           <button onClick={handlePickLocalDrops}
             className="flex-1 py-3 rounded-xl font-bold flex justify-center items-center gap-1.5 transition-all border-2 active:scale-95"
             style={{ background: 'linear-gradient(to bottom, #16a34a, #15803d)', borderColor: '#4ade80', color: '#fff', boxShadow: '0 3px 0 #14532d' }}>
-            <Hand className="w-5 h-5" /> 拾う
+            <Hand className="w-5 h-5" /> 周辺を調べる
             {nearbyCount > 0 && <span className="bg-white text-green-700 text-xs px-1.5 py-0.5 rounded-full font-black">{nearbyCount}</span>}
           </button>
           <button onClick={() => setShowDropModal(true)}
@@ -1113,16 +1176,16 @@ export default function App() {
             <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-purple-400 shrink-0" /><span className="text-slate-400">12% — Tier3  ハチミツ・水晶・金鉱石</span></div>
             <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" /><span className="text-slate-400"> 3% — Tier4  隕石の欠片・街の噂</span></div>
           </div>
-          <button onClick={handleGacha} disabled={points < 50}
+          <button onClick={handleGacha} disabled={points < 80}
             className="w-full py-4 rounded-xl font-black text-lg flex items-center justify-center gap-2 transition-all border-2 disabled:opacity-40 disabled:cursor-not-allowed"
-            style={points >= 50 ? {
+            style={points >= 80 ? {
               background: 'linear-gradient(to bottom, #fbbf24, #d97706)',
               borderColor: '#fcd34d', color: '#451a03',
               boxShadow: '0 4px 0 #92400e'
             } : { background: '#1e293b', borderColor: '#334155', color: '#475569' }}
-            onMouseDown={e => { if (points >= 50) e.currentTarget.style.transform = 'translateY(4px)'; e.currentTarget.style.boxShadow = 'none'; }}
-            onMouseUp={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = points >= 50 ? '0 4px 0 #92400e' : 'none'; }}>
-            <Coins className="w-5 h-5" /> 探索する (50pt)
+            onMouseDown={e => { if (points >= 80) e.currentTarget.style.transform = 'translateY(4px)'; e.currentTarget.style.boxShadow = 'none'; }}
+            onMouseUp={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = points >= 80 ? '0 4px 0 #92400e' : 'none'; }}>
+            <Coins className="w-5 h-5" /> 探索する (80pt)
           </button>
         </div>
       </div>
@@ -1144,6 +1207,11 @@ export default function App() {
         <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
           <div className="h-full bg-gradient-to-r from-orange-500 to-amber-400 rounded-full transition-all duration-500" style={{ width: `${xpPct}%` }} />
         </div>
+      </div>
+      {/* 所持設備バッジ */}
+      <div className="px-4 pt-2 shrink-0 flex gap-2 flex-wrap">
+        <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${(inventory['b1']||0) > 0 ? 'bg-amber-900/40 border-amber-600 text-amber-300' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>🪚 作業台 {(inventory['b1']||0) > 0 ? '✅' : '❌'}</span>
+        <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${(inventory['b2']||0) > 0 ? 'bg-red-900/40 border-red-700 text-red-300' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>🔥 かまど {(inventory['b2']||0) > 0 ? '✅' : '❌'}</span>
       </div>
       {/* クラフトスロット */}
       <div className="px-4 pt-3 shrink-0">
@@ -1205,11 +1273,15 @@ export default function App() {
   // --- レンダー: 交換（旧GeoDrop） ---
   const renderExchange = () => (
     <div className="flex flex-col h-full p-4 max-w-md mx-auto w-full bg-slate-900 text-white">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <h2 className="text-xl font-black flex items-center gap-2">
-          🔄 交換
+          ⚔️ 交換
         </h2>
         <span className="text-[10px] bg-slate-800 px-2 py-1 rounded border border-slate-700">{geoDrops.length}件</span>
+      </div>
+      <div className={`flex items-center justify-between px-3 py-2 rounded-xl mb-3 border text-sm font-bold ${tradedToday ? 'bg-slate-800 border-slate-700 text-slate-400' : 'bg-teal-900/30 border-teal-700 text-teal-300'}`}>
+        <span>{tradedToday ? '⏰ 今日の交換: 済み' : '✅ 今日の交換: 可能'}</span>
+        <span className="text-[10px] text-slate-500">1日1回まで</span>
       </div>
       <div className="flex-1 bg-slate-800/50 rounded-3xl p-4 border border-slate-700 overflow-y-auto mb-4">
         <h3 className="text-sm font-bold text-teal-300 mb-3 flex items-center gap-1">
