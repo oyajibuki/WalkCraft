@@ -572,6 +572,7 @@ export default function App() {
   const [selectedMat1, setSelectedMat1] = useState(null);
   const [selectedMat2, setSelectedMat2] = useState(null);
   const [selectedRecipe, setSelectedRecipe] = useState(null); // レシピブック詳細モーダル
+  const [craftJumpId, setCraftJumpId] = useState(null);
   const [craftCategory, setCraftCategory] = useState('all'); // カテゴリフィルター
   const [craftResult, setCraftResult] = useState(null);
   const [gachaResult, setGachaResult] = useState(null);
@@ -787,6 +788,13 @@ export default function App() {
     if (!currentPos) { showStatus('📡 GPS取得中...'); return; }
     const nearby = gpsDrops.filter(d => haversineM(currentPos.lat, currentPos.lon, d.lat, d.lon) <= 150);
     if (!nearby.length) { showStatus('🔍 半径150m以内に落とし物はありません'); return; }
+    const hasChest = (inventory['b3'] || 0) > 0;
+    const SLOT_CAP = 20;
+    const currentSlots = Object.values(inventory).filter(v => v > 0).length;
+    if (!hasChest && currentSlots >= SLOT_CAP) {
+      showStatus('🧰 アイテムが多すぎます！チェスト(竹+鉄鉱石)を作ろう');
+      return;
+    }
     const ids = nearby.map(d => d.uid);
     await supabase.from('geo_drops').delete().in('id', ids);
     setInventory(prev => {
@@ -1104,9 +1112,22 @@ export default function App() {
                 const item = getItemById(id);
                 const have = inventory[id] || 0;
                 const ok = have >= qty;
+                const isRecipe = RECIPES.some(r => r.id === id);
                 return (
-                  <div key={id} className={`flex items-center justify-between px-3 py-2 rounded-xl border ${ok ? 'bg-green-900/30 border-green-700' : 'bg-red-900/20 border-red-900'}`}>
-                    <span className="text-sm flex items-center gap-1.5 text-white"><ItemIcon item={item} size="sm" />{item?.name}</span>
+                  <div key={id}
+                    onClick={() => {
+                      if (isRecipe) {
+                        const recipe = RECIPES.find(r => r.id === id);
+                        setActiveTab('craft');
+                        setCraftJumpId(id);
+                        setSelectedRecipe(recipe);
+                      }
+                    }}
+                    className={`flex items-center justify-between px-3 py-2 rounded-xl border transition-all ${ok ? 'bg-green-900/30 border-green-700' : 'bg-red-900/20 border-red-900'} ${isRecipe ? 'cursor-pointer active:scale-95 hover:brightness-110' : ''}`}>
+                    <span className="text-sm flex items-center gap-1.5 text-white">
+                      <ItemIcon item={item} size="sm" />{item?.name}
+                      {isRecipe && <span className="text-[10px] text-slate-400 ml-1">🔨 タップでレシピ確認</span>}
+                    </span>
                     <span className={`text-sm font-black ${ok ? 'text-green-400' : 'text-red-400'}`}>{have}/{qty} {ok ? '✅' : '❌'}</span>
                   </div>
                 );
@@ -1389,7 +1410,7 @@ export default function App() {
             {STATIONS.map(s => {
               const have = (inventory[s.id] || 0) > 0;
               return (
-                <button key={s.id} onClick={() => setStationModal(s)}
+                <button key={s.id} onClick={() => { const r = RECIPES.find(rec => rec.id === s.id); if (r) setSelectedRecipe(r); }}
                   className={`text-[10px] font-bold px-2 py-0.5 rounded-full border active:scale-95 transition-all ${have ? s.active : 'bg-slate-800 border-slate-700 text-slate-500'}`}>
                   {s.icon} {s.name} {have ? '✅' : '❌'} ›
                 </button>
@@ -1538,50 +1559,6 @@ export default function App() {
                     } : { background: '#1e293b', borderColor: '#334155', color: '#475569' }}>
                     <Hammer className="w-5 h-5" /> クラフト
                   </button>
-                </div>
-              </div>
-            </div>
-          );
-        })()}
-        {/* 設備別レシピモーダル */}
-        {stationModal && (() => {
-          const NEEDS_MAP = { b1: NEEDS_WORKBENCH, b2: NEEDS_FURNACE, b6: NEEDS_BREWERY, b5: NEEDS_ENCHANT };
-          const relevantSet = NEEDS_MAP[stationModal.id];
-          const stationRecipes = RECIPES.filter(r => relevantSet?.has(r.id));
-          return (
-            <div className="absolute inset-0 bg-black/70 z-50 flex items-end" onClick={() => setStationModal(null)}>
-              <div className="bg-slate-800 border-t border-slate-600 rounded-t-3xl w-full shadow-2xl max-h-[75vh] flex flex-col" onClick={e => e.stopPropagation()}>
-                <div className="px-5 pt-4 pb-3 shrink-0 border-b border-slate-700">
-                  <div className="w-10 h-1 bg-slate-600 rounded-full mx-auto mb-3" />
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">{stationModal.icon}</span>
-                    <div>
-                      <h3 className="font-black text-white">{stationModal.name} のレシピ</h3>
-                      <p className="text-xs text-slate-400">{stationRecipes.length}種類のレシピで使用</p>
-                    </div>
-                    <span className={`ml-auto text-sm font-black ${(inventory[stationModal.id]||0)>0 ? 'text-green-400' : 'text-red-400'}`}>
-                      {(inventory[stationModal.id]||0)>0 ? '✅ 所持中' : '❌ 未所持'}
-                    </span>
-                  </div>
-                </div>
-                <div className="overflow-y-auto flex-1 px-4 py-3">
-                  <div className="grid grid-cols-3 gap-2">
-                    {stationRecipes.map(recipe => {
-                      const craftable = canCraftRecipe(recipe);
-                      return (
-                        <div key={recipe.id} onClick={() => { setStationModal(null); setSelectedRecipe(recipe); }}
-                          className={`rounded-xl border p-2 flex flex-col items-center cursor-pointer active:scale-95 transition-all ${craftable ? 'bg-slate-700 border-orange-600/70' : 'bg-slate-900/60 border-slate-800 opacity-60'}`}>
-                          <ItemIcon item={recipe} size="md" />
-                          <span className="text-[10px] font-black text-slate-300 text-center mt-1 leading-tight">{recipe.name}</span>
-                          <span className="text-[9px] text-slate-500 mt-0.5">Lv{recipe.reqLevel}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-                <div className="px-4 pb-4 pt-2 shrink-0">
-                  <button onClick={() => setStationModal(null)}
-                    className="w-full py-3 bg-slate-700 text-slate-300 rounded-2xl font-bold border border-slate-600 active:scale-95">閉じる</button>
                 </div>
               </div>
             </div>
