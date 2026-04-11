@@ -1199,16 +1199,16 @@ export default function App() {
         </div>
       </div>
       {showDropModal && (
-        <div className="absolute inset-0 z-[200] flex flex-col" style={{ background: '#0f172a' }}>
+        <div className="absolute inset-0 flex flex-col" style={{ background: '#0f172a', zIndex: 99999 }}>
           {/* ヘッダー */}
           <div className="flex items-center justify-between px-5 pt-5 pb-3 shrink-0 border-b border-slate-700">
             <div>
               <h3 className="font-black text-lg text-white">
-                {itemToDrop ? '個数を選択' : 'マップに置く'}
+                {!itemToDrop ? 'マップに置く' : !dropConfirm ? '個数を選択' : '確認'}
               </h3>
               <p className="text-xs text-slate-400">📍 現在地付近に設置されます</p>
             </div>
-            <button onClick={() => { setShowDropModal(false); setItemToDrop(''); setDropQty(1); }}
+            <button onClick={() => { setShowDropModal(false); setItemToDrop(''); setDropQty(1); setDropConfirm(false); }}
               className="w-9 h-9 bg-slate-700 rounded-full flex items-center justify-center text-slate-300 text-lg active:scale-95">✕</button>
           </div>
 
@@ -1216,18 +1216,17 @@ export default function App() {
             /* ── Step1: アイテム選択グリッド ── */
             <div className="grid grid-cols-3 gap-3 overflow-y-auto p-4 flex-1 min-h-0 content-start">
               {[...Object.values(MATERIALS), ...RECIPES].filter(i => (inventory[i.id] || 0) > 0).map(item => (
-                <div key={item.id} onClick={() => { setItemToDrop(item.id); setDropQty(1); }}
-                  className="border-2 border-slate-700 bg-slate-800 rounded-2xl p-3 text-center cursor-pointer active:scale-95 transition-all hover:border-amber-500">
+                <div key={item.id} onClick={() => { setItemToDrop(item.id); setDropQty(1); setDropConfirm(false); }}
+                  className="border-2 border-slate-700 bg-slate-800 rounded-2xl p-3 text-center cursor-pointer active:scale-95 transition-all">
                   <div className="flex justify-center mb-2"><ItemIcon item={item} size="lg" /></div>
                   <span className="text-xs font-bold block text-slate-300 leading-tight">{item.name}</span>
                   <span className="text-sm font-black block text-amber-400 mt-1">×{inventory[item.id]}</span>
                 </div>
               ))}
             </div>
-          ) : (
+          ) : !dropConfirm ? (
             /* ── Step2: 個数選択 ── */
             <div className="flex-1 flex flex-col items-center justify-center px-6 gap-6">
-              {/* 選択アイテム表示 */}
               <div className="text-center">
                 <div className="flex justify-center mb-3">
                   <ItemIcon item={getItemData(itemToDrop)} size="xl" />
@@ -1235,8 +1234,6 @@ export default function App() {
                 <p className="text-2xl font-black text-white">{getItemData(itemToDrop)?.name}</p>
                 <p className="text-sm text-slate-400 mt-1">所持: {inventory[itemToDrop] || 0}個</p>
               </div>
-
-              {/* 個数セレクター */}
               <div className="flex items-center gap-6 bg-slate-800 rounded-3xl px-8 py-5 border border-slate-600">
                 <button onClick={() => setDropQty(q => Math.max(1, q - 1))}
                   className="w-14 h-14 bg-slate-700 rounded-2xl font-black text-white text-3xl flex items-center justify-center active:scale-90 border-2 border-slate-600">−</button>
@@ -1244,10 +1241,30 @@ export default function App() {
                 <button onClick={() => setDropQty(q => Math.min(inventory[itemToDrop] || 1, q + 1))}
                   className="w-14 h-14 bg-slate-700 rounded-2xl font-black text-white text-3xl flex items-center justify-center active:scale-90 border-2 border-slate-600">＋</button>
               </div>
-
-              {/* ボタン */}
               <div className="flex gap-3 w-full">
                 <button onClick={() => { setItemToDrop(''); setDropQty(1); }}
+                  className="flex-1 py-4 bg-slate-700 text-slate-300 rounded-2xl font-bold border border-slate-600 active:scale-95">← 戻る</button>
+                <button onClick={() => setDropConfirm(true)}
+                  className="flex-[2] py-4 rounded-2xl font-black text-lg border-2 active:scale-95 flex items-center justify-center gap-2"
+                  style={{ background: 'linear-gradient(to bottom, #3b82f6, #2563eb)', borderColor: '#60a5fa', color: '#fff', boxShadow: '0 4px 0 #1d4ed8' }}>
+                  <ArrowDownCircle className="w-6 h-6" /> 置く
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* ── Step3: 最終確認 ── */
+            <div className="flex-1 flex flex-col items-center justify-center px-6 gap-6">
+              <div className="bg-slate-800 rounded-3xl p-8 w-full text-center border-2 border-amber-500/50">
+                <div className="flex justify-center mb-4">
+                  <ItemIcon item={getItemData(itemToDrop)} size="xl" />
+                </div>
+                <p className="text-xl font-black text-white mb-1">{getItemData(itemToDrop)?.name}</p>
+                <p className="text-4xl font-black text-amber-400 mb-3">{dropQty}<span className="text-lg text-slate-400 ml-1">個</span></p>
+                <p className="text-base font-bold text-white">本当に置きますか？</p>
+                <p className="text-xs text-slate-400 mt-1">他の冒険者が150m以内で拾えます</p>
+              </div>
+              <div className="flex gap-3 w-full">
+                <button onClick={() => setDropConfirm(false)}
                   className="flex-1 py-4 bg-slate-700 text-slate-300 rounded-2xl font-bold border border-slate-600 active:scale-95">← 戻る</button>
                 <button onClick={async () => {
                   if (!currentPos) { showStatus('📡 GPS取得中... もう少し待ってください'); return; }
@@ -1263,7 +1280,7 @@ export default function App() {
                   }
                   if (successCount > 0) {
                     setInventory(prev => ({ ...prev, [itemToDrop]: (prev[itemToDrop] || 0) - successCount }));
-                    setShowDropModal(false); setItemToDrop(''); setDropQty(1);
+                    setShowDropModal(false); setItemToDrop(''); setDropQty(1); setDropConfirm(false);
                     showStatus(`📦 ${placedName}を${successCount}個 マップに置きました`);
                   } else {
                     showStatus('❌ 置けませんでした。通信状況を確認してください');
