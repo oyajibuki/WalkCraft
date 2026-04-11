@@ -294,7 +294,7 @@ const RECIPES = [
   { id: 'b2',  name: 'かまど',          icon: '🧱', reqLevel: 1, materials: ['m2', 'm10'],   desc: '鉱石を精錬する炉',                             price: 40   },
   { id: 'b3',  name: 'チェスト',        icon: '🧰', reqLevel: 2, materials: ['m27', 'm4'],   desc: '収納が増える',                                 price: 60   },
   { id: 'b4',  name: 'ベッド',          icon: '🛏️', reqLevel: 2, materials: ['m1', 'm28'],   desc: 'リスポーン地点設定',                           price: 50   },
-  { id: 'b5',  name: 'エンチャント台',  icon: '📖', reqLevel: 4, materials: ['m52', 'm41'],  desc: '装備に魔法付与',                               price: 800  },
+  { id: 'b5',  name: 'エンチャント台',  icon: '📖', reqLevel: 4, materials: ['m52', 'm15'],  desc: '装備に魔法付与',                               price: 800  },
   { id: 'b6',  name: '醸造台',          icon: '⚗️', reqLevel: 3, materials: ['m4', 'm15'],   desc: 'ポーションを作る',                             price: 200  },
   { id: 'b7',  name: '自転車',          icon: '🚲', reqLevel: 3, materials: ['m4', 'm12'],   desc: '歩行ボーナス付与',                             price: 300  },
   { id: 'b8',  name: 'パラセール',      icon: '🪂', reqLevel: 3, materials: ['m29', 'm1'],   desc: '麻と木の滑空装備',                             price: 200  },
@@ -391,7 +391,7 @@ const NEEDS_FURNACE = new Set(['i6','i7','i8','i11','i16','m15','m19','m52']);
 // 醸造台(b6)が必要なレシピ（ポーション・特殊食料）
 const NEEDS_BREWERY = new Set(['i10','i15','f8','f10','f11','r8','r9']);
 // エンチャント台(b5)が必要なレシピ（最上位魔法・宝石系）
-const NEEDS_ENCHANT = new Set(['w4','w5','w6','w15','b12','p1','p4','p7']);
+const NEEDS_ENCHANT = new Set(['w6','w15','b12','p1','p4','p7']);
 
 // --- 重み付きドロッププール（拠点建設に必要な素材を優先） ---
 const getWeightedDropPool = (stageIdx) => {
@@ -1199,21 +1199,29 @@ export default function App() {
         </div>
       </div>
       {showDropModal && (
-        <div className="absolute inset-0 z-50 flex flex-col bg-slate-950">
-          {/* 地図エリア（縮小表示） */}
-          <div className="relative h-[28%] shrink-0 overflow-hidden">
-            <GameMap currentPos={currentPos} waypoints={waypoints} routeSegments={routeSegments}
-              gpsDrops={gpsDrops} tradeMarkers={tradeMarkers} recenterTrigger={recenterTrigger} isVisible={true} playerLevel={level} />
-            <div className="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none">
-              <span className="text-white/60 text-xs font-bold bg-black/40 px-3 py-1 rounded-full">📍 現在地付近に設置されます</span>
+        <div className="fixed inset-0 z-[9999] flex flex-col bg-slate-950" style={{ maxWidth: '448px', left: '50%', transform: 'translateX(-50%)' }}>
+          {/* 現在地表示エリア（地図の代わりにGPS情報を表示） */}
+          <div className="relative shrink-0 overflow-hidden flex items-center justify-center"
+            style={{ height: '28%', background: 'linear-gradient(135deg,#0f172a,#1e293b)' }}>
+            <div className="text-center px-4">
+              <div className="text-5xl mb-2">📍</div>
+              <p className="text-white font-black text-base">現在地付近に設置されます</p>
+              {currentPos
+                ? <p className="text-teal-400 text-xs mt-1 font-mono">{currentPos.lat.toFixed(5)}, {currentPos.lon.toFixed(5)}</p>
+                : <p className="text-slate-500 text-xs mt-1">GPS取得中...</p>
+              }
+            </div>
+            <div className="absolute top-3 right-3">
+              <button onClick={() => { setShowDropModal(false); setItemToDrop(''); setDropQty(1); setDropConfirm(false); }}
+                className="w-8 h-8 bg-slate-700/80 rounded-full flex items-center justify-center text-slate-300 text-lg active:scale-95">✕</button>
             </div>
           </div>
 
           {/* 選択パネル */}
-          <div className="flex-1 flex flex-col bg-slate-800 rounded-t-3xl overflow-hidden">
+          <div className="flex-1 flex flex-col bg-slate-800 rounded-t-3xl overflow-hidden min-h-0">
             <div className="px-5 pt-4 pb-2 shrink-0">
               <div className="w-10 h-1 bg-slate-600 rounded-full mx-auto mb-3" />
-              {!dropConfirm ? (
+              {!dropConfirm && (
                 <>
                   <h3 className="font-black text-lg text-white mb-1">マップに置く</h3>
                   {itemToDrop && (
@@ -1233,20 +1241,11 @@ export default function App() {
                     </div>
                   )}
                 </>
-              ) : (
-                <div className="text-center py-2">
-                  <p className="text-lg font-black text-white mb-1">確認</p>
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <ItemIcon item={getItemData(itemToDrop)} size="lg" />
-                  </div>
-                  <p className="text-base font-black text-amber-400">{getItemData(itemToDrop)?.name} を {dropQty}個 置きますか？</p>
-                  <p className="text-xs text-slate-400 mt-1">他の人が150m以内で拾えます</p>
-                </div>
               )}
             </div>
 
             {!dropConfirm ? (
-              <div className="grid grid-cols-3 gap-2.5 overflow-y-auto px-4 pb-2 flex-1">
+              <div className="grid grid-cols-3 gap-2.5 overflow-y-auto px-4 pb-2 flex-1 min-h-0">
                 {[...Object.values(MATERIALS), ...RECIPES].filter(i => (inventory[i.id] || 0) > 0).map(item => (
                   <div key={item.id} onClick={() => { setItemToDrop(item.id); setDropQty(1); }}
                     className={`border-2 rounded-xl p-3 text-center cursor-pointer transition-all active:scale-95 ${itemToDrop === item.id ? 'border-amber-400 bg-amber-900/30 shadow-md' : 'border-slate-700 bg-slate-900'}`}>
@@ -1256,7 +1255,22 @@ export default function App() {
                   </div>
                 ))}
               </div>
-            ) : null}
+            ) : (
+              /* ── 確認画面 ── */
+              <div className="flex-1 flex flex-col items-center justify-center px-6 min-h-0">
+                <div className="bg-slate-900 rounded-3xl p-8 w-full text-center border-2 border-amber-600/40">
+                  <div className="flex justify-center mb-4">
+                    <ItemIcon item={getItemData(itemToDrop)} size="xl" />
+                  </div>
+                  <p className="text-2xl font-black text-amber-400 mb-2">
+                    {getItemData(itemToDrop)?.name}
+                  </p>
+                  <p className="text-4xl font-black text-white mb-2">{dropQty}<span className="text-xl text-slate-400">個</span></p>
+                  <p className="text-base font-bold text-white mb-1">マップに置きますか？</p>
+                  <p className="text-xs text-slate-400">他の冒険者が150m以内で拾えます</p>
+                </div>
+              </div>
+            )}
 
             <div className="flex gap-2.5 px-4 pb-4 pt-2 shrink-0">
               {!dropConfirm ? (
@@ -1281,9 +1295,10 @@ export default function App() {
                       const { data } = await supabase.from('geo_drops').insert({ user_id: authUser.id, material_id: itemToDrop, lat, lon }).select().single();
                       if (data) setGpsDrops(p => [...p, { uid: data.id, materialId: data.material_id, lat: data.lat, lon: data.lon }]);
                     }
+                    const placedName = getItemData(itemToDrop)?.name;
                     setInventory(prev => ({ ...prev, [itemToDrop]: prev[itemToDrop] - dropQty }));
                     setShowDropModal(false); setItemToDrop(''); setDropQty(1); setDropConfirm(false);
-                    showStatus(`📦 ${getItemData(itemToDrop)?.name}を${dropQty}個 マップに置きました`);
+                    showStatus(`📦 ${placedName}を${dropQty}個 マップに置きました`);
                   }}
                     className="flex-1 py-3.5 rounded-2xl font-black text-base border-2 active:scale-95 flex items-center justify-center gap-2"
                     style={{ background: 'linear-gradient(to bottom, #16a34a, #15803d)', borderColor: '#4ade80', color: '#fff', boxShadow: '0 4px 0 #14532d' }}>
