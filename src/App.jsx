@@ -81,7 +81,7 @@ const waypointIcon = L.divIcon({
   className: '', iconSize: [8, 8], iconAnchor: [4, 4],
 });
 const exchangeIcon = L.divIcon({
-  html: `<div style="width:34px;height:34px;background:linear-gradient(135deg,#7c3aed,#4f46e5);border:2px solid #a78bfa;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 3px 8px rgba(0,0,0,0.7),0 0 0 1px rgba(167,139,250,0.4);filter:drop-shadow(0 2px 6px rgba(0,0,0,0.8))">⚔️</div>`,
+  html: `<div style="width:34px;height:34px;background:linear-gradient(135deg,#0d9488,#0f766e);border:2px solid #2dd4bf;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 3px 8px rgba(0,0,0,0.7),0 0 0 1px rgba(45,212,191,0.4);filter:drop-shadow(0 2px 6px rgba(0,0,0,0.8))">🤝</div>`,
   className: '', iconSize: [34, 34], iconAnchor: [17, 17],
 });
 
@@ -320,16 +320,20 @@ const RECIPES = [
   { id: 'lr6', name: '絶品海鮮丼',      icon: '🍱', reqLevel: 3, materials: ['l15', 'l40'],  desc: '新潟米+明太子',                                price: 3000 },
   { id: 'lr7', name: '鹿角の魔杖',      icon: '🪄', reqLevel: 4, materials: ['l29', 'ga3'],  desc: '奈良鹿角+マナの結晶',                          price: 4000 },
   { id: 'lr8', name: '日本地図の完成図',icon: '🗺️', reqLevel: 4, materials: ['i20', 'l1'],   desc: 'ワールドコンパス+北海道メロン（代表）',         price: 99999},
+  // ── 合成レシピ（素材を素材からクラフト） ──
+  { id: 'm15', name: '水晶の精製',     icon: '💎', reqLevel: 2, materials: ['m9', 'm10'],  desc: '砂と石炭を高温で焼いた純粋な結晶。',            price: 50   },
+  { id: 'm19', name: '金の精錬',       icon: '🟡', reqLevel: 3, materials: ['m4', 'm15'],  desc: '鉄鉱石と水晶の反応で金鉱石を生成。',            price: 80   },
+  { id: 'm52', name: '黒曜石の生成',   icon: '⬛', reqLevel: 3, materials: ['m9', 'm6'],   desc: '砂と火打ち石を急冷して生まれる漆黒の石。',       price: 100  },
 ];
 const BASE_STAGES = [
-  { stage: 1, name: '焚き火キャンプ',   icon: '🔥', phase: 'Phase 1: サバイバル期',   desc: '焚き火を囲む原野のキャンプ。旅の始まり。',                              cost: { m1: 10, m2: 5 } },
-  { stage: 2, name: 'テント',           icon: '⛺', phase: 'Phase 1: サバイバル期',   desc: '雨風をしのげるテント。ツタで編んだベッドも快適。',                       cost: { m1: 20, m16: 5 } },
-  { stage: 3, name: '丸太小屋',         icon: '🏕️', phase: 'Phase 1: サバイバル期',   desc: '石の斧で木を切り倒して建てた小屋。ここから開拓が始まる！',              cost: { i1: 1, m1: 20, m2: 10 } },
-  { stage: 4, name: 'レンガの家',       icon: '🏠', phase: 'Phase 2: 開拓村期',       desc: 'レンガを積み上げた頑丈な家。Tier2レシピが全解放される！',               cost: { i7: 8, m8: 10 } },
-  { stage: 5, name: '鉄工所',           icon: '⚙️', phase: 'Phase 2: 開拓村期',       desc: '鉄のインゴットで作った工業施設。機械化の夜明け。',                       cost: { i6: 5, m4: 15 } },
-  { stage: 6, name: '蒸気工場',         icon: '🏭', phase: 'Phase 3: 産業革命期',     desc: '銅線と蒸気が動力を生む。Tier3レシピ解放！産業革命の幕開け！',           cost: { i11: 3, i12: 5 } },
-  { stage: 7, name: '研究施設',         icon: '🏛️', phase: 'Phase 3: 産業革命期',     desc: '魔法の薬と水晶で動く高度な研究拠点。謎が解き明かされる。',               cost: { i15: 2, m15: 10 } },
-  { stage: 8, name: 'メガロポリス',     icon: '🌆', phase: 'Phase 4: 現代都市期',     desc: '電球・プラスチック・ワールドコンパス。あなたは伝説の開拓者！',           cost: { i17: 2, i18: 3, i20: 1 } },
+  { stage: 1, name: '焚き火キャンプ',   icon: '🔥', phase: 'Phase 1: サバイバル期',   desc: '焚き火を囲む原野のキャンプ。旅の始まり。',                              cost: { m1: 10, m2: 5 },          ptCost: 0    },
+  { stage: 2, name: 'テント',           icon: '⛺', phase: 'Phase 1: サバイバル期',   desc: '雨風をしのげるテント。ツタで編んだベッドも快適。',                       cost: { m1: 20, m16: 5 },         ptCost: 500  },
+  { stage: 3, name: '丸太小屋',         icon: '🏕️', phase: 'Phase 1: サバイバル期',   desc: '石の斧で木を切り倒して建てた小屋。ここから開拓が始まる！',              cost: { i1: 1, m1: 20, m2: 10 }, ptCost: 1000 },
+  { stage: 4, name: 'レンガの家',       icon: '🏠', phase: 'Phase 2: 開拓村期',       desc: 'レンガを積み上げた頑丈な家。Tier2レシピが全解放される！',               cost: { i7: 8, m8: 10 },          ptCost: 2000 },
+  { stage: 5, name: '鉄工所',           icon: '⚙️', phase: 'Phase 2: 開拓村期',       desc: '鉄のインゴットで作った工業施設。機械化の夜明け。',                       cost: { i6: 5, m4: 15 },          ptCost: 3500 },
+  { stage: 6, name: '蒸気工場',         icon: '🏭', phase: 'Phase 3: 産業革命期',     desc: '銅線と蒸気が動力を生む。Tier3レシピ解放！産業革命の幕開け！',           cost: { i11: 3, i12: 5 },         ptCost: 5000 },
+  { stage: 7, name: '研究施設',         icon: '🏛️', phase: 'Phase 3: 産業革命期',     desc: '魔法の薬と水晶で動く高度な研究拠点。謎が解き明かされる。',               cost: { i15: 2, m15: 10 },        ptCost: 8000 },
+  { stage: 8, name: 'メガロポリス',     icon: '🌆', phase: 'Phase 4: 現代都市期',     desc: '電球・プラスチック・ワールドコンパス。あなたは伝説の開拓者！',           cost: { i17: 2, i18: 3, i20: 1 }, ptCost: 15000},
 ];
 const INITIAL_INVENTORY = {
   // 既存素材 m1-m20
@@ -383,7 +387,7 @@ const NEEDS_WORKBENCH = new Set([
   'lr1','lr2','lr3','lr4','lr5','lr6','lr7','lr8',
 ]);
 // かまど(b2)が必要なレシピ（鉱石精錬系）
-const NEEDS_FURNACE = new Set(['i6','i7','i8','i11','i16']);
+const NEEDS_FURNACE = new Set(['i6','i7','i8','i11','i16','m15','m19','m52']);
 // 醸造台(b6)が必要なレシピ（ポーション・特殊食料）
 const NEEDS_BREWERY = new Set(['i10','i15','f8','f10','f11','r8','r9']);
 // エンチャント台(b5)が必要なレシピ（最上位魔法・宝石系）
@@ -587,8 +591,12 @@ export default function App() {
   const [geoDrops, setGeoDrops] = useState([]);        // 交換タブのリスト
   const [tradeMarkers, setTradeMarkers] = useState([]); // 地図上の交換マーカー
   const [tradeOffer, setTradeOffer] = useState('');
+  const [tradeOfferQty, setTradeOfferQty] = useState(1);
   const [tradeRequest, setTradeRequest] = useState('');
   const [tradeMessage, setTradeMessage] = useState('');
+  const [dropQty, setDropQty] = useState(1);
+  const [dropConfirm, setDropConfirm] = useState(false);
+  const [stationModal, setStationModal] = useState(null); // { id, name, icon }
   // 1日1回の交換制限
   const [lastTradeDate, setLastTradeDate] = useState(() => localStorage.getItem('wc_lastTrade') ?? '');
   const todayStr = new Date().toLocaleDateString('ja-JP');
@@ -663,15 +671,22 @@ export default function App() {
   };
 
   // DBの行をUI用オブジェクトに変換（authUserRef経由でリアルタイム時も正しく判定）
-  const toTradeItem = (d) => ({
-    id: d.id,
-    user: d.placer_name || '冒険者',
-    avatar: d.placer_avatar || null,
-    offering: d.offering_item_id,
-    requesting: d.requesting_item_id,
-    message: d.message || '',
-    isOwn: d.user_id === (authUserRef.current?.id ?? authUser?.id),
-  });
+  const toTradeItem = (d) => {
+    const msg = d.message || '';
+    const qtyMatch = msg.match(/^\[qty=(\d+)\]\s*/);
+    const offerQty = qtyMatch ? parseInt(qtyMatch[1]) : 1;
+    const cleanMsg = qtyMatch ? msg.replace(qtyMatch[0], '') : msg;
+    return {
+      id: d.id,
+      user: d.placer_name || '冒険者',
+      avatar: d.placer_avatar || null,
+      offering: d.offering_item_id,
+      requesting: d.requesting_item_id,
+      offerQty,
+      message: cleanMsg || '交換希望',
+      isOwn: d.user_id === (authUserRef.current?.id ?? authUser?.id),
+    };
+  };
 
   const loadGpsDrops = async () => {
     const { data } = await supabase.from('geo_drops').select('*');
@@ -758,7 +773,7 @@ export default function App() {
     if (lastWp) { const seg = await fetchOSRMRoute(lastWp, currentPos); setRouteSegments(p => [...p, seg]); }
 
     // 素材を散りばめる: 2〜4個、プレイヤーLvで最大数UP、拠点に必要な素材優先
-    const dropCount = Math.min(4, 2 + Math.floor(level / 3));
+    const dropCount = Math.min(6, 3 + Math.floor(level / 3));
     const pool = getWeightedDropPool(baseStage);
     const offset = () => (Math.random() - 0.5) * 0.0012;
     const newDrops = [];
@@ -813,15 +828,15 @@ export default function App() {
 
   // --- ガチャ ---
   const handleGacha = () => {
-    if (points < 80) return;
-    setPoints(p => p - 80);
+    if (points < 60) return;
+    setPoints(p => p - 60);
     const rand = Math.random() * 100;
     let pool;
-    if (rand < 55) {
+    if (rand < 62) {
       // Tier1: 拠点に必要な素材を優先
       const urgentPool = getWeightedDropPool(baseStage).filter(m => m.rarity === 1);
       pool = urgentPool.length > 0 ? urgentPool : Object.values(MATERIALS).filter(m => m.rarity === 1);
-    } else if (rand < 85) {
+    } else if (rand < 86) {
       pool = Object.values(MATERIALS).filter(m => m.rarity === 2);
     } else if (rand < 97) {
       pool = Object.values(MATERIALS).filter(m => m.rarity === 3);
@@ -937,10 +952,11 @@ export default function App() {
       showStatus(`❌ 交換に失敗しました（${data?.error ?? error?.message}）`); return;
     }
     // ローカルのインベントリを即時反映（DB保存は自動デバウンス）
+    const offerQty = drop.offerQty ?? 1;
     setInventory(prev => ({
       ...prev,
       [drop.requesting]: (prev[drop.requesting] || 0) - 1,
-      [drop.offering]: (prev[drop.offering] || 0) + 1,
+      [drop.offering]: (prev[drop.offering] || 0) + offerQty,
     }));
     // リストとマップから削除（リアルタイムでも来るが即時反映）
     setGeoDrops(p => p.filter(d => d.id !== drop.id));
@@ -954,18 +970,20 @@ export default function App() {
 
   // --- 交換: 設置（Supabaseに保存） ---
   const handleCreateTrade = async () => {
-    if (!tradeOffer || !tradeRequest || (inventory[tradeOffer] || 0) <= 0) return;
+    const qty = Math.max(1, Math.min(tradeOfferQty, inventory[tradeOffer] || 0));
+    if (!tradeOffer || !tradeRequest || (inventory[tradeOffer] || 0) < qty) return;
     const myName = profile?.display_name ?? '冒険者';
     const myAvatar = profile?.avatar_url ?? authUser?.user_metadata?.avatar_url ?? null;
 
-    // アイテムを先に減らす
-    setInventory(prev => ({ ...prev, [tradeOffer]: prev[tradeOffer] - 1 }));
+    // アイテムを先に減らす（qty分）
+    setInventory(prev => ({ ...prev, [tradeOffer]: prev[tradeOffer] - qty }));
 
+    const encodedMsg = qty > 1 ? `[qty=${qty}] ${tradeMessage || '交換希望'}` : (tradeMessage || '交換希望');
     const { error } = await supabase.from('trade_offers').insert({
       user_id: authUser.id,
       offering_item_id: tradeOffer,
       requesting_item_id: tradeRequest,
-      message: tradeMessage || '交換希望',
+      message: encodedMsg,
       placer_name: myName,
       placer_avatar: myAvatar,
       lat: currentPos?.lat ?? null,
@@ -974,10 +992,10 @@ export default function App() {
 
     if (error) {
       // 失敗したらアイテムを戻す
-      setInventory(prev => ({ ...prev, [tradeOffer]: (prev[tradeOffer] || 0) + 1 }));
+      setInventory(prev => ({ ...prev, [tradeOffer]: (prev[tradeOffer] || 0) + qty }));
       showStatus('❌ 設置に失敗しました'); return;
     }
-    setTradeOffer(''); setTradeRequest(''); setTradeMessage('');
+    setTradeOffer(''); setTradeRequest(''); setTradeMessage(''); setTradeOfferQty(1);
     showStatus('🔄 交換条件をマップに設置しました！');
   };
 
@@ -994,13 +1012,16 @@ export default function App() {
   const handleBuild = () => {
     const next = BASE_STAGES[baseStage];
     if (!next) return;
-    const canBuild = Object.entries(next.cost).every(([id, qty]) => (inventory[id] || 0) >= qty);
-    if (!canBuild) return;
+    const canBuildMats = Object.entries(next.cost).every(([id, qty]) => (inventory[id] || 0) >= qty);
+    const ptCost = next.ptCost ?? 0;
+    const canBuildPts = points >= ptCost;
+    if (!canBuildMats || !canBuildPts) return;
     setInventory(prev => {
       const n = { ...prev };
       Object.entries(next.cost).forEach(([id, qty]) => { n[id] -= qty; });
       return n;
     });
+    if (ptCost > 0) setPoints(p => p - ptCost);
     setBaseStage(p => p + 1);
     showStatus(`🎉 ${next.name} が完成した！`);
   };
@@ -1086,7 +1107,7 @@ export default function App() {
               </div>
             </div>
             <p className="text-xs font-bold text-slate-400 mb-2">必要素材</p>
-            <div className="space-y-2 mb-4">
+            <div className="space-y-2 mb-3">
               {Object.entries(next.cost).map(([id, qty]) => {
                 const item = getItemById(id);
                 const have = inventory[id] || 0;
@@ -1099,10 +1120,19 @@ export default function App() {
                 );
               })}
             </div>
+            {(next.ptCost ?? 0) > 0 && (() => {
+              const ptOk = points >= next.ptCost;
+              return (
+                <div className={`flex items-center justify-between px-3 py-2 rounded-xl border mb-3 ${ptOk ? 'bg-green-900/30 border-green-700' : 'bg-red-900/20 border-red-900'}`}>
+                  <span className="text-sm flex items-center gap-1.5 text-white"><Coins className="w-4 h-4 text-yellow-400" /> ポイント</span>
+                  <span className={`text-sm font-black ${ptOk ? 'text-green-400' : 'text-red-400'}`}>{points}/{next.ptCost}pt {ptOk ? '✅' : '❌'}</span>
+                </div>
+              );
+            })()}
             <button onClick={handleBuild}
-              disabled={!Object.entries(next.cost).every(([id, qty]) => (inventory[id] || 0) >= qty)}
+              disabled={!Object.entries(next.cost).every(([id, qty]) => (inventory[id] || 0) >= qty) || points < (next.ptCost ?? 0)}
               className="w-full py-4 rounded-2xl font-black text-lg active:scale-95 transition-transform shadow-lg disabled:opacity-40 bg-gradient-to-r from-amber-500 to-orange-500 text-white">
-              🔨 建設する
+              🔨 建設する {(next.ptCost ?? 0) > 0 ? `(-${next.ptCost}pt)` : ''}
             </button>
           </div>
         ) : (
@@ -1169,38 +1199,98 @@ export default function App() {
         </div>
       </div>
       {showDropModal && (
-        <div className="absolute inset-0 bg-black/75 z-50 flex items-end" onClick={() => setShowDropModal(false)}>
-          <div className="bg-slate-800 border-t border-slate-600 rounded-t-3xl w-full p-5 shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="w-10 h-1 bg-slate-600 rounded-full mx-auto mb-4" />
-            <h3 className="font-black text-xl mb-1 text-center text-white">アイテムをマップに置く</h3>
-            <p className="text-xs text-slate-400 text-center mb-4">現在地付近に設置。他の人が150m以内で拾えます。</p>
-            {itemToDrop && (
-              <div className="flex items-center gap-3 bg-slate-900 rounded-2xl px-4 py-3 mb-3 border border-amber-600/50">
-                <ItemIcon item={getItemData(itemToDrop)} size="md" />
-                <div>
-                  <span className="font-black text-white text-sm">{getItemData(itemToDrop)?.name}</span>
-                  <span className="block text-xs text-amber-400">選択中</span>
-                </div>
-              </div>
-            )}
-            <div className="grid grid-cols-3 gap-3 max-h-72 overflow-y-auto mb-4">
-              {[...Object.values(MATERIALS), ...RECIPES].filter(i => (inventory[i.id] || 0) > 0).map(item => (
-                <div key={item.id} onClick={() => setItemToDrop(item.id)}
-                  className={`border-2 rounded-xl p-3 text-center cursor-pointer transition-all active:scale-95 ${itemToDrop === item.id ? 'border-amber-400 bg-amber-900/30 shadow-md' : 'border-slate-600 bg-slate-900'}`}>
-                  <div className="flex justify-center mb-1.5"><ItemIcon item={item} size="md" /></div>
-                  <span className="text-xs font-bold block text-slate-300 leading-tight">{item.name}</span>
-                  <span className="text-sm font-black block text-slate-300 mt-0.5">×{inventory[item.id]}</span>
-                </div>
-              ))}
+        <div className="absolute inset-0 z-50 flex flex-col bg-slate-950">
+          {/* 地図エリア（縮小表示） */}
+          <div className="relative h-[28%] shrink-0 overflow-hidden">
+            <GameMap currentPos={currentPos} waypoints={waypoints} routeSegments={routeSegments}
+              gpsDrops={gpsDrops} tradeMarkers={tradeMarkers} recenterTrigger={recenterTrigger} isVisible={true} playerLevel={level} />
+            <div className="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none">
+              <span className="text-white/60 text-xs font-bold bg-black/40 px-3 py-1 rounded-full">📍 現在地付近に設置されます</span>
             </div>
-            <div className="flex gap-2.5">
-              <button onClick={() => { setShowDropModal(false); setItemToDrop(''); }}
-                className="flex-1 py-3.5 bg-slate-700 text-slate-300 rounded-2xl font-bold border border-slate-600 active:scale-95">キャンセル</button>
-              <button onClick={handleDropItem} disabled={!itemToDrop}
-                className="flex-1 py-3.5 rounded-2xl font-black text-base disabled:opacity-40 border-2 active:scale-95 flex items-center justify-center gap-2"
-                style={itemToDrop ? { background: 'linear-gradient(to bottom, #3b82f6, #2563eb)', borderColor: '#60a5fa', color: '#fff', boxShadow: '0 4px 0 #1d4ed8' } : { background: '#1e293b', borderColor: '#334155', color: '#475569' }}>
-                <ArrowDownCircle className="w-5 h-5" /> 置く
-              </button>
+          </div>
+
+          {/* 選択パネル */}
+          <div className="flex-1 flex flex-col bg-slate-800 rounded-t-3xl overflow-hidden">
+            <div className="px-5 pt-4 pb-2 shrink-0">
+              <div className="w-10 h-1 bg-slate-600 rounded-full mx-auto mb-3" />
+              {!dropConfirm ? (
+                <>
+                  <h3 className="font-black text-lg text-white mb-1">マップに置く</h3>
+                  {itemToDrop && (
+                    <div className="flex items-center gap-3 bg-slate-900 rounded-xl px-3 py-2 mb-2 border border-amber-600/40">
+                      <ItemIcon item={getItemData(itemToDrop)} size="md" />
+                      <div className="flex-1">
+                        <span className="font-black text-white text-sm">{getItemData(itemToDrop)?.name}</span>
+                        <span className="block text-xs text-slate-400">所持: {inventory[itemToDrop] || 0}個</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => setDropQty(q => Math.max(1, q - 1))}
+                          className="w-8 h-8 bg-slate-700 rounded-lg font-black text-white text-lg flex items-center justify-center active:scale-95">-</button>
+                        <span className="text-lg font-black text-amber-400 w-8 text-center">{dropQty}</span>
+                        <button onClick={() => setDropQty(q => Math.min(inventory[itemToDrop] || 1, q + 1))}
+                          className="w-8 h-8 bg-slate-700 rounded-lg font-black text-white text-lg flex items-center justify-center active:scale-95">+</button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-2">
+                  <p className="text-lg font-black text-white mb-1">確認</p>
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <ItemIcon item={getItemData(itemToDrop)} size="lg" />
+                  </div>
+                  <p className="text-base font-black text-amber-400">{getItemData(itemToDrop)?.name} を {dropQty}個 置きますか？</p>
+                  <p className="text-xs text-slate-400 mt-1">他の人が150m以内で拾えます</p>
+                </div>
+              )}
+            </div>
+
+            {!dropConfirm ? (
+              <div className="grid grid-cols-3 gap-2.5 overflow-y-auto px-4 pb-2 flex-1">
+                {[...Object.values(MATERIALS), ...RECIPES].filter(i => (inventory[i.id] || 0) > 0).map(item => (
+                  <div key={item.id} onClick={() => { setItemToDrop(item.id); setDropQty(1); }}
+                    className={`border-2 rounded-xl p-3 text-center cursor-pointer transition-all active:scale-95 ${itemToDrop === item.id ? 'border-amber-400 bg-amber-900/30 shadow-md' : 'border-slate-700 bg-slate-900'}`}>
+                    <div className="flex justify-center mb-1.5"><ItemIcon item={item} size="md" /></div>
+                    <span className="text-xs font-bold block text-slate-300 leading-tight">{item.name}</span>
+                    <span className="text-sm font-black block text-white mt-0.5">×{inventory[item.id]}</span>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
+            <div className="flex gap-2.5 px-4 pb-4 pt-2 shrink-0">
+              {!dropConfirm ? (
+                <>
+                  <button onClick={() => { setShowDropModal(false); setItemToDrop(''); setDropQty(1); setDropConfirm(false); }}
+                    className="flex-1 py-3.5 bg-slate-700 text-slate-300 rounded-2xl font-bold border border-slate-600 active:scale-95">キャンセル</button>
+                  <button onClick={() => setDropConfirm(true)} disabled={!itemToDrop}
+                    className="flex-1 py-3.5 rounded-2xl font-black text-base disabled:opacity-40 border-2 active:scale-95"
+                    style={itemToDrop ? { background: 'linear-gradient(to bottom, #3b82f6, #2563eb)', borderColor: '#60a5fa', color: '#fff', boxShadow: '0 4px 0 #1d4ed8' } : { background: '#1e293b', borderColor: '#334155', color: '#475569' }}>
+                    次へ →
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button onClick={() => setDropConfirm(false)}
+                    className="flex-1 py-3.5 bg-slate-700 text-slate-300 rounded-2xl font-bold border border-slate-600 active:scale-95">← 戻る</button>
+                  <button onClick={async () => {
+                    if (!itemToDrop || !currentPos || (inventory[itemToDrop] || 0) < dropQty) return;
+                    const offset = () => (Math.random() - 0.5) * 0.0002;
+                    for (let i = 0; i < dropQty; i++) {
+                      const lat = currentPos.lat + offset(), lon = currentPos.lon + offset();
+                      const { data } = await supabase.from('geo_drops').insert({ user_id: authUser.id, material_id: itemToDrop, lat, lon }).select().single();
+                      if (data) setGpsDrops(p => [...p, { uid: data.id, materialId: data.material_id, lat: data.lat, lon: data.lon }]);
+                    }
+                    setInventory(prev => ({ ...prev, [itemToDrop]: prev[itemToDrop] - dropQty }));
+                    setShowDropModal(false); setItemToDrop(''); setDropQty(1); setDropConfirm(false);
+                    showStatus(`📦 ${getItemData(itemToDrop)?.name}を${dropQty}個 マップに置きました`);
+                  }}
+                    className="flex-1 py-3.5 rounded-2xl font-black text-base border-2 active:scale-95 flex items-center justify-center gap-2"
+                    style={{ background: 'linear-gradient(to bottom, #16a34a, #15803d)', borderColor: '#4ade80', color: '#fff', boxShadow: '0 4px 0 #14532d' }}>
+                    <ArrowDownCircle className="w-5 h-5" /> 置く！
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -1227,16 +1317,16 @@ export default function App() {
                 </div>
               : <div className="text-5xl opacity-20">🗺️</div>}
           </div>
-          <button onClick={handleGacha} disabled={points < 80}
+          <button onClick={handleGacha} disabled={points < 60}
             className="w-full py-4 rounded-xl font-black text-lg flex items-center justify-center gap-2 transition-all border-2 disabled:opacity-40 disabled:cursor-not-allowed"
-            style={points >= 80 ? {
+            style={points >= 60 ? {
               background: 'linear-gradient(to bottom, #fbbf24, #d97706)',
               borderColor: '#fcd34d', color: '#451a03',
               boxShadow: '0 4px 0 #92400e'
             } : { background: '#1e293b', borderColor: '#334155', color: '#475569' }}
-            onMouseDown={e => { if (points >= 80) e.currentTarget.style.transform = 'translateY(4px)'; e.currentTarget.style.boxShadow = 'none'; }}
-            onMouseUp={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = points >= 80 ? '0 4px 0 #92400e' : 'none'; }}>
-            <Coins className="w-5 h-5" /> 探索する (80pt)
+            onMouseDown={e => { if (points >= 60) e.currentTarget.style.transform = 'translateY(4px)'; e.currentTarget.style.boxShadow = 'none'; }}
+            onMouseUp={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = points >= 60 ? '0 4px 0 #92400e' : 'none'; }}>
+            <Coins className="w-5 h-5" /> 探索する (60pt)
           </button>
         </div>
       </div>
@@ -1302,14 +1392,15 @@ export default function App() {
           <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden border border-slate-700 mb-2">
             <div className="h-full bg-gradient-to-r from-orange-500 to-amber-400 rounded-full transition-all duration-500" style={{ width: `${xpPct}%` }} />
           </div>
-          {/* 設備バッジ */}
+          {/* 設備バッジ（タップでレシピ一覧） */}
           <div className="flex gap-1.5 flex-wrap">
             {STATIONS.map(s => {
               const have = (inventory[s.id] || 0) > 0;
               return (
-                <span key={s.id} className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${have ? s.active : 'bg-slate-800 border-slate-700 text-slate-500'}`}>
-                  {s.icon} {s.name} {have ? '✅' : '❌'}
-                </span>
+                <button key={s.id} onClick={() => setStationModal(s)}
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full border active:scale-95 transition-all ${have ? s.active : 'bg-slate-800 border-slate-700 text-slate-500'}`}>
+                  {s.icon} {s.name} {have ? '✅' : '❌'} ›
+                </button>
               );
             })}
           </div>
@@ -1460,6 +1551,50 @@ export default function App() {
             </div>
           );
         })()}
+        {/* 設備別レシピモーダル */}
+        {stationModal && (() => {
+          const NEEDS_MAP = { b1: NEEDS_WORKBENCH, b2: NEEDS_FURNACE, b6: NEEDS_BREWERY, b5: NEEDS_ENCHANT };
+          const relevantSet = NEEDS_MAP[stationModal.id];
+          const stationRecipes = RECIPES.filter(r => relevantSet?.has(r.id));
+          return (
+            <div className="absolute inset-0 bg-black/70 z-50 flex items-end" onClick={() => setStationModal(null)}>
+              <div className="bg-slate-800 border-t border-slate-600 rounded-t-3xl w-full shadow-2xl max-h-[75vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                <div className="px-5 pt-4 pb-3 shrink-0 border-b border-slate-700">
+                  <div className="w-10 h-1 bg-slate-600 rounded-full mx-auto mb-3" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{stationModal.icon}</span>
+                    <div>
+                      <h3 className="font-black text-white">{stationModal.name} のレシピ</h3>
+                      <p className="text-xs text-slate-400">{stationRecipes.length}種類のレシピで使用</p>
+                    </div>
+                    <span className={`ml-auto text-sm font-black ${(inventory[stationModal.id]||0)>0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {(inventory[stationModal.id]||0)>0 ? '✅ 所持中' : '❌ 未所持'}
+                    </span>
+                  </div>
+                </div>
+                <div className="overflow-y-auto flex-1 px-4 py-3">
+                  <div className="grid grid-cols-3 gap-2">
+                    {stationRecipes.map(recipe => {
+                      const craftable = canCraftRecipe(recipe);
+                      return (
+                        <div key={recipe.id} onClick={() => { setStationModal(null); setSelectedRecipe(recipe); }}
+                          className={`rounded-xl border p-2 flex flex-col items-center cursor-pointer active:scale-95 transition-all ${craftable ? 'bg-slate-700 border-orange-600/70' : 'bg-slate-900/60 border-slate-800 opacity-60'}`}>
+                          <ItemIcon item={recipe} size="md" />
+                          <span className="text-[10px] font-black text-slate-300 text-center mt-1 leading-tight">{recipe.name}</span>
+                          <span className="text-[9px] text-slate-500 mt-0.5">Lv{recipe.reqLevel}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="px-4 pb-4 pt-2 shrink-0">
+                  <button onClick={() => setStationModal(null)}
+                    className="w-full py-3 bg-slate-700 text-slate-300 rounded-2xl font-bold border border-slate-600 active:scale-95">閉じる</button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
       </div>
     );
   };
@@ -1469,7 +1604,7 @@ export default function App() {
     <div className="flex flex-col h-full p-4 max-w-md mx-auto w-full bg-slate-900 text-white">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-xl font-black flex items-center gap-2">
-          ⚔️ 交換
+          🤝 交換
         </h2>
         <span className="text-[10px] bg-slate-800 px-2 py-1 rounded border border-slate-700">{geoDrops.length}件</span>
       </div>
@@ -1506,7 +1641,7 @@ export default function App() {
                       <div className="flex items-center gap-3">
                         <div className="text-center">
                           <div className="flex justify-center"><ItemIcon item={offerData} size="md" /></div>
-                          <span className="text-[10px] text-teal-300 font-bold block mt-1">貰える</span>
+                          <span className="text-[10px] text-teal-300 font-bold block mt-1">貰える{drop.offerQty > 1 ? `×${drop.offerQty}` : ''}</span>
                         </div>
                         <ArrowRightLeft className="w-4 h-4 text-slate-500" />
                         <div className="text-center">
@@ -1538,15 +1673,15 @@ export default function App() {
           <div className="flex-1 bg-slate-900 p-2 rounded-xl border border-slate-700 relative">
             <label className="text-[10px] text-slate-400 absolute top-2 left-3 font-bold">出すアイテム</label>
             <select className="w-full bg-transparent text-white pt-5 pb-1 px-2 outline-none font-bold text-sm"
-              value={tradeOffer} onChange={e => setTradeOffer(e.target.value)}>
+              value={tradeOffer} onChange={e => { setTradeOffer(e.target.value); setTradeOfferQty(1); }}>
               <option value="" className="text-black">選択...</option>
               {[...Object.values(MATERIALS), ...RECIPES].filter(i => (inventory[i.id] || 0) > 0).map(item => (
-                <option key={item.id} value={item.id} className="text-black">{item.icon} {item.name}</option>
+                <option key={item.id} value={item.id} className="text-black">{item.icon} {item.name} (×{inventory[item.id]})</option>
               ))}
             </select>
           </div>
           <div className="flex-1 bg-slate-900 p-2 rounded-xl border border-slate-700 relative">
-            <label className="text-[10px] text-slate-400 absolute top-2 left-3 font-bold">欲しいアイテム</label>
+            <label className="text-[10px] text-slate-400 absolute top-2 left-3 font-bold">欲しいアイテム(1個)</label>
             <select className="w-full bg-transparent text-white pt-5 pb-1 px-2 outline-none font-bold text-sm"
               value={tradeRequest} onChange={e => setTradeRequest(e.target.value)}>
               <option value="" className="text-black">選択...</option>
@@ -1556,6 +1691,17 @@ export default function App() {
             </select>
           </div>
         </div>
+        {tradeOffer && (
+          <div className="flex items-center gap-3 bg-slate-900 rounded-xl px-3 py-2 mb-2 border border-slate-700">
+            <span className="text-xs text-slate-400 font-bold">出す個数:</span>
+            <button onClick={() => setTradeOfferQty(q => Math.max(1, q - 1))}
+              className="w-7 h-7 bg-slate-700 rounded-lg font-black text-white text-lg flex items-center justify-center active:scale-95">-</button>
+            <span className="text-base font-black text-white w-8 text-center">{tradeOfferQty}</span>
+            <button onClick={() => setTradeOfferQty(q => Math.min(inventory[tradeOffer] || 1, q + 1))}
+              className="w-7 h-7 bg-slate-700 rounded-lg font-black text-white text-lg flex items-center justify-center active:scale-95">+</button>
+            <span className="text-xs text-slate-500 ml-auto">所持: {inventory[tradeOffer] || 0}個</span>
+          </div>
+        )}
         <div className="flex gap-2">
           <input type="text" placeholder="メッセージ（任意）" value={tradeMessage}
             onChange={e => setTradeMessage(e.target.value)}
