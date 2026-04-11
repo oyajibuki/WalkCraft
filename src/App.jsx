@@ -391,7 +391,7 @@ const NEEDS_FURNACE = new Set(['i6','i7','i8','i11','i16','m15','m19','m52']);
 // 醸造台(b6)が必要なレシピ（ポーション・特殊食料）
 const NEEDS_BREWERY = new Set(['i10','i15','f8','f10','f11','r8','r9']);
 // エンチャント台(b5)が必要なレシピ（最上位魔法・宝石系）
-const NEEDS_ENCHANT = new Set(['w6','w15','b12','p1','p4','p7']);
+const NEEDS_ENCHANT = new Set(['w15','p1','p4','p7']);
 
 // --- 重み付きドロッププール（拠点建設に必要な素材を優先） ---
 const getWeightedDropPool = (stageIdx) => {
@@ -1199,27 +1199,20 @@ export default function App() {
         </div>
       </div>
       {showDropModal && (
-        <div className="absolute inset-0 z-[200] flex flex-col bg-slate-950">
-          {/* 現在地表示エリア */}
-          <div className="relative shrink-0 flex items-center justify-center"
-            style={{ height: '28%', background: 'linear-gradient(135deg,#0f172a,#1e293b)' }}>
-            <div className="text-center px-4">
-              <div className="text-4xl mb-1">📍</div>
-              <p className="text-white font-black text-sm">現在地付近に設置されます</p>
-              {currentPos
-                ? <p className="text-teal-400 text-xs mt-1 font-mono">{currentPos.lat.toFixed(5)}, {currentPos.lon.toFixed(5)}</p>
-                : <p className="text-slate-500 text-xs mt-1">GPS取得中...</p>
-              }
+        <div className="absolute inset-0 z-[200] flex flex-col bg-slate-800">
+          {/* ヘッダー */}
+          <div className="flex items-center justify-between px-5 pt-5 pb-3 shrink-0 border-b border-slate-700">
+            <div>
+              <h3 className="font-black text-lg text-white">マップに置く</h3>
+              <p className="text-xs text-slate-400">📍 現在地付近に設置されます</p>
             </div>
             <button onClick={() => { setShowDropModal(false); setItemToDrop(''); setDropQty(1); }}
-              className="absolute top-3 right-3 w-8 h-8 bg-slate-700/80 rounded-full flex items-center justify-center text-slate-300 text-lg active:scale-95">✕</button>
+              className="w-9 h-9 bg-slate-700 rounded-full flex items-center justify-center text-slate-300 text-lg active:scale-95">✕</button>
           </div>
 
-          {/* 選択パネル */}
-          <div className="flex-1 flex flex-col bg-slate-800 rounded-t-3xl overflow-hidden min-h-0">
-            <div className="px-5 pt-4 pb-2 shrink-0">
-              <div className="w-10 h-1 bg-slate-600 rounded-full mx-auto mb-3" />
-              <h3 className="font-black text-lg text-white mb-1">マップに置く</h3>
+          {/* 選択パネル（ヘッダー部分の代わり） */}
+          <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+            <div className="px-5 pt-3 pb-2 shrink-0">
               {itemToDrop && (
                 <div className="flex items-center gap-3 bg-slate-900 rounded-xl px-3 py-2 border border-amber-600/40">
                   <ItemIcon item={getItemData(itemToDrop)} size="md" />
