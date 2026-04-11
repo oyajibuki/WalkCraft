@@ -1250,17 +1250,24 @@ export default function App() {
                 <button onClick={() => { setItemToDrop(''); setDropQty(1); }}
                   className="flex-1 py-4 bg-slate-700 text-slate-300 rounded-2xl font-bold border border-slate-600 active:scale-95">← 戻る</button>
                 <button onClick={async () => {
-                  if (!itemToDrop || !currentPos || (inventory[itemToDrop] || 0) < dropQty) return;
+                  if (!currentPos) { showStatus('📡 GPS取得中... もう少し待ってください'); return; }
+                  if (!itemToDrop || (inventory[itemToDrop] || 0) < dropQty) return;
+                  const placedName = getItemData(itemToDrop)?.name;
                   const offset = () => (Math.random() - 0.5) * 0.0002;
+                  let successCount = 0;
                   for (let i = 0; i < dropQty; i++) {
                     const lat = currentPos.lat + offset(), lon = currentPos.lon + offset();
-                    const { data } = await supabase.from('geo_drops').insert({ user_id: authUser.id, material_id: itemToDrop, lat, lon }).select().single();
-                    if (data) setGpsDrops(p => [...p, { uid: data.id, materialId: data.material_id, lat: data.lat, lon: data.lon }]);
+                    const { data, error } = await supabase.from('geo_drops').insert({ user_id: authUser.id, material_id: itemToDrop, lat, lon }).select().single();
+                    if (data) { setGpsDrops(p => [...p, { uid: data.id, materialId: data.material_id, lat: data.lat, lon: data.lon }]); successCount++; }
+                    if (error) console.error('geo_drops insert error:', error);
                   }
-                  const placedName = getItemData(itemToDrop)?.name;
-                  setInventory(prev => ({ ...prev, [itemToDrop]: prev[itemToDrop] - dropQty }));
-                  setShowDropModal(false); setItemToDrop(''); setDropQty(1);
-                  showStatus(`📦 ${placedName}を${dropQty}個 マップに置きました`);
+                  if (successCount > 0) {
+                    setInventory(prev => ({ ...prev, [itemToDrop]: (prev[itemToDrop] || 0) - successCount }));
+                    setShowDropModal(false); setItemToDrop(''); setDropQty(1);
+                    showStatus(`📦 ${placedName}を${successCount}個 マップに置きました`);
+                  } else {
+                    showStatus('❌ 置けませんでした。通信状況を確認してください');
+                  }
                 }}
                   className="flex-[2] py-4 rounded-2xl font-black text-lg border-2 active:scale-95 flex items-center justify-center gap-2"
                   style={{ background: 'linear-gradient(to bottom, #16a34a, #15803d)', borderColor: '#4ade80', color: '#fff', boxShadow: '0 4px 0 #14532d' }}>
