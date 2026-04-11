@@ -1215,7 +1215,7 @@ export default function App() {
           {!itemToDrop ? (
             /* ── Step1: アイテム選択グリッド ── */
             <div className="grid grid-cols-3 gap-3 overflow-y-auto p-4 flex-1 min-h-0 content-start">
-              {[...Object.values(MATERIALS), ...RECIPES].filter(i => (inventory[i.id] || 0) > 0).map(item => (
+              {[...Object.values(MATERIALS), ...RECIPES.filter(r => !MATERIALS[r.id])].filter(i => (inventory[i.id] || 0) > 0).map(item => (
                 <div key={item.id} onClick={() => { setItemToDrop(item.id); setDropQty(1); setDropConfirm(false); }}
                   className="border-2 border-slate-700 bg-slate-800 rounded-2xl p-3 text-center cursor-pointer active:scale-95 transition-all">
                   <div className="flex justify-center mb-2"><ItemIcon item={item} size="lg" /></div>
@@ -1351,7 +1351,7 @@ export default function App() {
       { id: 'b6', name: '醸造台', icon: '⚗️', active: 'bg-purple-900/40 border-purple-700 text-purple-300' },
       { id: 'b5', name: 'エンチャント台', icon: '📖', active: 'bg-blue-900/40 border-blue-700 text-blue-300' },
     ];
-    const ownedItems = [...Object.values(MATERIALS), ...RECIPES].filter(i => (inventory[i.id] || 0) > 0);
+    const ownedItems = [...Object.values(MATERIALS), ...RECIPES.filter(r => !MATERIALS[r.id])].filter(i => (inventory[i.id] || 0) > 0);
     const filtered = craftCategory === 'inv'
       ? null // インベントリ表示モード
       : craftCategory === 'all'
@@ -1675,7 +1675,7 @@ export default function App() {
             <select className="w-full bg-transparent text-white pt-5 pb-1 px-2 outline-none font-bold text-sm"
               value={tradeOffer} onChange={e => { setTradeOffer(e.target.value); setTradeOfferQty(1); }}>
               <option value="" className="text-black">選択...</option>
-              {[...Object.values(MATERIALS), ...RECIPES].filter(i => (inventory[i.id] || 0) > 0).map(item => (
+              {[...Object.values(MATERIALS), ...RECIPES.filter(r => !MATERIALS[r.id])].filter(i => (inventory[i.id] || 0) > 0).map(item => (
                 <option key={item.id} value={item.id} className="text-black">{item.icon} {item.name} (×{inventory[item.id]})</option>
               ))}
             </select>
