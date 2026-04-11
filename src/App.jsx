@@ -1199,71 +1199,76 @@ export default function App() {
         </div>
       </div>
       {showDropModal && (
-        <div className="absolute inset-0 z-[200] flex flex-col bg-slate-800">
+        <div className="absolute inset-0 z-[200] flex flex-col" style={{ background: '#0f172a' }}>
           {/* ヘッダー */}
           <div className="flex items-center justify-between px-5 pt-5 pb-3 shrink-0 border-b border-slate-700">
             <div>
-              <h3 className="font-black text-lg text-white">マップに置く</h3>
+              <h3 className="font-black text-lg text-white">
+                {itemToDrop ? '個数を選択' : 'マップに置く'}
+              </h3>
               <p className="text-xs text-slate-400">📍 現在地付近に設置されます</p>
             </div>
             <button onClick={() => { setShowDropModal(false); setItemToDrop(''); setDropQty(1); }}
               className="w-9 h-9 bg-slate-700 rounded-full flex items-center justify-center text-slate-300 text-lg active:scale-95">✕</button>
           </div>
 
-          {/* 選択パネル（ヘッダー部分の代わり） */}
-          <div className="flex-1 flex flex-col overflow-hidden min-h-0">
-            <div className="px-5 pt-3 pb-2 shrink-0">
-              {itemToDrop && (
-                <div className="flex items-center gap-3 bg-slate-900 rounded-xl px-3 py-2 border border-amber-600/40">
-                  <ItemIcon item={getItemData(itemToDrop)} size="md" />
-                  <div className="flex-1">
-                    <span className="font-black text-white text-sm">{getItemData(itemToDrop)?.name}</span>
-                    <span className="block text-xs text-slate-400">所持: {inventory[itemToDrop] || 0}個</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => setDropQty(q => Math.max(1, q - 1))}
-                      className="w-8 h-8 bg-slate-700 rounded-lg font-black text-white text-lg flex items-center justify-center active:scale-95">-</button>
-                    <span className="text-lg font-black text-amber-400 w-8 text-center">{dropQty}</span>
-                    <button onClick={() => setDropQty(q => Math.min(inventory[itemToDrop] || 1, q + 1))}
-                      className="w-8 h-8 bg-slate-700 rounded-lg font-black text-white text-lg flex items-center justify-center active:scale-95">+</button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-3 gap-2.5 overflow-y-auto px-4 pb-2 flex-1 min-h-0">
+          {!itemToDrop ? (
+            /* ── Step1: アイテム選択グリッド ── */
+            <div className="grid grid-cols-3 gap-3 overflow-y-auto p-4 flex-1 min-h-0 content-start">
               {[...Object.values(MATERIALS), ...RECIPES].filter(i => (inventory[i.id] || 0) > 0).map(item => (
                 <div key={item.id} onClick={() => { setItemToDrop(item.id); setDropQty(1); }}
-                  className={`border-2 rounded-xl p-3 text-center cursor-pointer transition-all active:scale-95 ${itemToDrop === item.id ? 'border-amber-400 bg-amber-900/30 shadow-md' : 'border-slate-700 bg-slate-900'}`}>
-                  <div className="flex justify-center mb-1.5"><ItemIcon item={item} size="md" /></div>
+                  className="border-2 border-slate-700 bg-slate-800 rounded-2xl p-3 text-center cursor-pointer active:scale-95 transition-all hover:border-amber-500">
+                  <div className="flex justify-center mb-2"><ItemIcon item={item} size="lg" /></div>
                   <span className="text-xs font-bold block text-slate-300 leading-tight">{item.name}</span>
-                  <span className="text-sm font-black block text-white mt-0.5">×{inventory[item.id]}</span>
+                  <span className="text-sm font-black block text-amber-400 mt-1">×{inventory[item.id]}</span>
                 </div>
               ))}
             </div>
+          ) : (
+            /* ── Step2: 個数選択 ── */
+            <div className="flex-1 flex flex-col items-center justify-center px-6 gap-6">
+              {/* 選択アイテム表示 */}
+              <div className="text-center">
+                <div className="flex justify-center mb-3">
+                  <ItemIcon item={getItemData(itemToDrop)} size="xl" />
+                </div>
+                <p className="text-2xl font-black text-white">{getItemData(itemToDrop)?.name}</p>
+                <p className="text-sm text-slate-400 mt-1">所持: {inventory[itemToDrop] || 0}個</p>
+              </div>
 
-            <div className="flex gap-2.5 px-4 pb-4 pt-2 shrink-0">
-              <button onClick={() => { setShowDropModal(false); setItemToDrop(''); setDropQty(1); }}
-                className="flex-1 py-3.5 bg-slate-700 text-slate-300 rounded-2xl font-bold border border-slate-600 active:scale-95">キャンセル</button>
-              <button disabled={!itemToDrop || !currentPos} onClick={async () => {
-                if (!itemToDrop || !currentPos || (inventory[itemToDrop] || 0) < dropQty) return;
-                const offset = () => (Math.random() - 0.5) * 0.0002;
-                for (let i = 0; i < dropQty; i++) {
-                  const lat = currentPos.lat + offset(), lon = currentPos.lon + offset();
-                  const { data } = await supabase.from('geo_drops').insert({ user_id: authUser.id, material_id: itemToDrop, lat, lon }).select().single();
-                  if (data) setGpsDrops(p => [...p, { uid: data.id, materialId: data.material_id, lat: data.lat, lon: data.lon }]);
-                }
-                const placedName = getItemData(itemToDrop)?.name;
-                setInventory(prev => ({ ...prev, [itemToDrop]: prev[itemToDrop] - dropQty }));
-                setShowDropModal(false); setItemToDrop(''); setDropQty(1);
-                showStatus(`📦 ${placedName}を${dropQty}個 マップに置きました`);
-              }}
-                className="flex-1 py-3.5 rounded-2xl font-black text-base border-2 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-40"
-                style={{ background: 'linear-gradient(to bottom, #16a34a, #15803d)', borderColor: '#4ade80', color: '#fff', boxShadow: '0 4px 0 #14532d' }}>
-                <ArrowDownCircle className="w-5 h-5" /> 置く
-              </button>
+              {/* 個数セレクター */}
+              <div className="flex items-center gap-6 bg-slate-800 rounded-3xl px-8 py-5 border border-slate-600">
+                <button onClick={() => setDropQty(q => Math.max(1, q - 1))}
+                  className="w-14 h-14 bg-slate-700 rounded-2xl font-black text-white text-3xl flex items-center justify-center active:scale-90 border-2 border-slate-600">−</button>
+                <span className="text-5xl font-black text-amber-400 w-20 text-center">{dropQty}</span>
+                <button onClick={() => setDropQty(q => Math.min(inventory[itemToDrop] || 1, q + 1))}
+                  className="w-14 h-14 bg-slate-700 rounded-2xl font-black text-white text-3xl flex items-center justify-center active:scale-90 border-2 border-slate-600">＋</button>
+              </div>
+
+              {/* ボタン */}
+              <div className="flex gap-3 w-full">
+                <button onClick={() => { setItemToDrop(''); setDropQty(1); }}
+                  className="flex-1 py-4 bg-slate-700 text-slate-300 rounded-2xl font-bold border border-slate-600 active:scale-95">← 戻る</button>
+                <button onClick={async () => {
+                  if (!itemToDrop || !currentPos || (inventory[itemToDrop] || 0) < dropQty) return;
+                  const offset = () => (Math.random() - 0.5) * 0.0002;
+                  for (let i = 0; i < dropQty; i++) {
+                    const lat = currentPos.lat + offset(), lon = currentPos.lon + offset();
+                    const { data } = await supabase.from('geo_drops').insert({ user_id: authUser.id, material_id: itemToDrop, lat, lon }).select().single();
+                    if (data) setGpsDrops(p => [...p, { uid: data.id, materialId: data.material_id, lat: data.lat, lon: data.lon }]);
+                  }
+                  const placedName = getItemData(itemToDrop)?.name;
+                  setInventory(prev => ({ ...prev, [itemToDrop]: prev[itemToDrop] - dropQty }));
+                  setShowDropModal(false); setItemToDrop(''); setDropQty(1);
+                  showStatus(`📦 ${placedName}を${dropQty}個 マップに置きました`);
+                }}
+                  className="flex-[2] py-4 rounded-2xl font-black text-lg border-2 active:scale-95 flex items-center justify-center gap-2"
+                  style={{ background: 'linear-gradient(to bottom, #16a34a, #15803d)', borderColor: '#4ade80', color: '#fff', boxShadow: '0 4px 0 #14532d' }}>
+                  <ArrowDownCircle className="w-6 h-6" /> 置く
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>
