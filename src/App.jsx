@@ -467,7 +467,7 @@ const GameMap = ({ currentPos, waypoints, routeSegments, gpsDrops, tradeMarkers,
 };
 
 // --- ログイン画面 ---
-const LoginScreen = () => {
+const LoginScreen = ({ onGuestPlay }) => {
   const [loading, setLoading] = useState(null);
   const redirectTo = window.location.origin + window.location.pathname;
 
@@ -525,6 +525,17 @@ const LoginScreen = () => {
             </svg>
             {loading === 'twitter' ? 'ログイン中...' : 'Xでログイン'}
           </button>
+          <div className="flex items-center gap-3 my-1">
+            <div className="flex-1 h-px bg-slate-700" />
+            <span className="text-slate-600 text-xs">または</span>
+            <div className="flex-1 h-px bg-slate-700" />
+          </div>
+          <button onClick={onGuestPlay} disabled={!!loading}
+            className="w-full py-3 rounded-lg font-bold text-slate-400 flex items-center justify-center gap-2 disabled:opacity-50 active:translate-y-1 transition-all border border-slate-700"
+            style={{ background: 'transparent' }}>
+            🎮 ゲストでプレイ
+          </button>
+          <p className="text-center text-xs text-slate-600 -mt-1">※ゲストはアイテムの保存ができません</p>
         </div>
         <div className="mt-8 text-center text-xs text-slate-600 space-x-3">
           <a href="./privacy.html" target="_blank" className="underline hover:text-slate-400 transition-colors">プライバシーポリシー</a>
@@ -543,6 +554,7 @@ export default function App() {
   // 認証
   const [authUser, setAuthUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [guestMode, setGuestMode] = useState(false);
 
   // プロフィール
   const [profile, setProfile] = useState(null);
@@ -773,8 +785,12 @@ export default function App() {
     for (let i = 0; i < dropCount; i++) {
       const mat = pool[Math.floor(Math.random() * pool.length)];
       const lat = currentPos.lat + offset(), lon = currentPos.lon + offset();
-      const { data } = await supabase.from('geo_drops').insert({ user_id: authUser.id, material_id: mat.id, lat, lon }).select().single();
-      if (data) newDrops.push({ uid: data.id, materialId: data.material_id, lat: data.lat, lon: data.lon });
+      if (authUser) {
+        const { data } = await supabase.from('geo_drops').insert({ user_id: authUser.id, material_id: mat.id, lat, lon }).select().single();
+        if (data) newDrops.push({ uid: data.id, materialId: data.material_id, lat: data.lat, lon: data.lon });
+      } else {
+        newDrops.push({ uid: 'guest_' + Math.random().toString(36).slice(2), materialId: mat.id, lat, lon });
+      }
     }
     if (newDrops.length > 0) setGpsDrops(p => [...p, ...newDrops]);
     const names = [...new Set(newDrops.map(d => MATERIALS[d.materialId]?.name ?? ''))].join('・');
@@ -811,8 +827,12 @@ export default function App() {
     if (!itemToDrop || !currentPos || inventory[itemToDrop] <= 0) return;
     const offset = () => (Math.random() - 0.5) * 0.0002;
     const lat = currentPos.lat + offset(), lon = currentPos.lon + offset();
-    const { data } = await supabase.from('geo_drops').insert({ user_id: authUser.id, material_id: itemToDrop, lat, lon }).select().single();
-    if (data) setGpsDrops(p => [...p, { uid: data.id, materialId: data.material_id, lat: data.lat, lon: data.lon }]);
+    if (authUser) {
+      const { data } = await supabase.from('geo_drops').insert({ user_id: authUser.id, material_id: itemToDrop, lat, lon }).select().single();
+      if (data) setGpsDrops(p => [...p, { uid: data.id, materialId: data.material_id, lat: data.lat, lon: data.lon }]);
+    } else {
+      setGpsDrops(p => [...p, { uid: 'guest_' + Math.random().toString(36).slice(2), materialId: itemToDrop, lat, lon }]);
+    }
     setInventory(prev => ({ ...prev, [itemToDrop]: prev[itemToDrop] - 1 }));
     setShowDropModal(false); setItemToDrop('');
     showStatus('📦 アイテムをマップに置きました');
@@ -1699,10 +1719,10 @@ export default function App() {
   );
 
   // --- ログイン画面 ---
-  if (!authUser) return <div className="h-screen w-full max-w-md mx-auto shadow-2xl"><LoginScreen /></div>;
+  if (!authUser && !guestMode) return <div className="h-screen w-full max-w-md mx-auto shadow-2xl"><LoginScreen onGuestPlay={() => setGuestMode(true)} /></div>;
 
   // --- プロフィール設定画面 ---
-  if (profileChecked && (!profile || !profile.display_name)) {
+  if (!guestMode && profileChecked && (!profile || !profile.display_name)) {
     return (
       <div className="h-screen w-full max-w-md mx-auto shadow-2xl">
         <ProfileSetup authUser={authUser} onSave={(p) => setProfile(p)} />
@@ -1711,11 +1731,19 @@ export default function App() {
   }
 
   // --- ゲーム本体 ---
-  const displayName = profile?.display_name ?? authUser.user_metadata?.name ?? '';
-  const avatarUrl = profile?.avatar_url ?? authUser.user_metadata?.avatar_url ?? null;
+  const displayName = guestMode ? 'ゲスト' : (profile?.display_name ?? authUser?.user_metadata?.name ?? '');
+  const avatarUrl = guestMode ? null : (profile?.avatar_url ?? authUser?.user_metadata?.avatar_url ?? null);
 
   return (
     <div className="h-screen w-full bg-black text-slate-800 font-sans flex flex-col overflow-hidden max-w-md mx-auto shadow-2xl relative">
+      {guestMode && (
+        <div className="absolute top-0 left-0 right-0 z-[1100] flex items-center justify-between px-4 py-1.5"
+          style={{ background: 'rgba(251,191,36,0.15)', borderBottom: '1px solid rgba(251,191,36,0.3)' }}>
+          <span className="text-xs text-amber-400 font-bold">⚠️ ゲストモード：アイテムは保存されません</span>
+          <button onClick={() => setGuestMode(false)}
+            className="text-xs text-amber-300 underline font-bold ml-2 shrink-0">ログイン</button>
+        </div>
+      )}
       {statusMsg && (
         <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[1000] bg-slate-900/90 text-white text-sm font-bold px-5 py-2.5 rounded-full shadow-2xl whitespace-nowrap">
           {statusMsg}
